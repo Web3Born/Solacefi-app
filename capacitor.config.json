@@ -1,0 +1,6 @@
+{
+  "appId": "com.solacefi.app",
+  "appName": "SolaceFi",
+  "webDir": "dist",
+  "backgroundColor": "#050B12"
+}
