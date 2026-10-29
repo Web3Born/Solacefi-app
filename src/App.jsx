@@ -81,7 +81,7 @@ function PayId({ st, set, go }) {
 function PayCard({ u }) {
   const [qr, setQr] = useState('')
   const [msg, setMsg] = useState('')
-  const link = `${import.meta.env.VITE_PUBLIC_URL || location.origin}/?pay=${u.payId}`
+  const link = `${location.origin}/?pay=${u.payId}`
   useEffect(() => { QRCode.toDataURL(link, { margin: 1, width: 360 }).then(setQr).catch(() => {}) }, [link])
   const copy = async () => { try { await navigator.clipboard.writeText('@' + u.payId); setMsg('Pay ID copied') } catch { setMsg('Copy is not available here') } }
   const share = async () => {
