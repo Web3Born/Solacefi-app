@@ -11,12 +11,12 @@ export const save = s => { try { localStorage.setItem(K, JSON.stringify(s)) } ca
 export const available = (s, id) => !s.dir[id]
 export const lookup = (s, id) => s.dir[id] || null
 export const claim = (s, id) => { const a = addr(); return { ...s, user: { ...s.user, payId: id, address: a }, dir: { ...s.dir, [id]: { name: s.user.name, addr: a } } } }
-const tx = (type, label, amount, to) => ({ id: Math.random().toString(36).slice(2, 10), ts: Date.now(), type, label, amount, to })
+const tx = (type, label, amount, to, note = '') => ({ id: Math.random().toString(36).slice(2, 10), ts: Date.now(), type, label, amount, to, note })
 export const fund = (s, n) => ({ ...s, balance: +(s.balance + n).toFixed(2), txs: [tx('fund', 'Test funds added', n), ...s.txs] })
-export const send = async (s, to, n) => {
+export const send = async (s, to, n, note = '') => {
   await new Promise(r => setTimeout(r, 900))
   if (!s.dir[to]) throw new Error('No account found with that Pay ID')
   if (n > s.balance) throw new Error('Not enough balance')
-  return tx('out', 'To @' + to, n, to)
+  return tx('out', 'To @' + to, n, to, note)
 }
 export const apply = (s, t) => ({ ...s, balance: +(s.balance - t.amount).toFixed(2), txs: [t, ...s.txs] })

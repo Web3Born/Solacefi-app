@@ -7,7 +7,7 @@ const P = {
   home: 'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10', qr: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h3v3h-3zM20 14v6h-6',
   gear: 'M12 8a4 4 0 100 8 4 4 0 000-8zM4 12h2M18 12h2M12 4v2M12 18v2', check: 'M5 12l5 5L20 7',
   eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 100 6 3 3 0 000-6z',
-  lock: 'M5 11h14v10H5zM8 11V8a4 4 0 018 0v3', list: 'M4 6h16M4 12h16M4 18h10', alert: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v6M12 16.5h.01'
+  lock: 'M5 11h14v10H5zM8 11V8a4 4 0 018 0v3', req: 'M3 6h18v12H3zM3 7l9 6 9-6', list: 'M4 6h16M4 12h16M4 18h10', alert: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v6M12 16.5h.01'
 }
 const I = ({ n, s = 22 }) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={P[n]} /></svg>
 const money = n => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -15,6 +15,8 @@ const short = a => a.slice(0, 8) + '…' + a.slice(-4)
 const when = t => { const d = Math.floor((Date.now() - t) / 864e5); return d < 1 ? 'Today' : d < 2 ? 'Yesterday' : new Date(t).toLocaleDateString() }
 const nm = c => c.includes('@') ? c.split('@')[0].replace(/^./, x => x.toUpperCase()) : 'Friend'
 const clean = v => v.toLowerCase().replace(/^@/, '').trim()
+const press = (a, k) => k === '←' ? a.slice(0, -1) : k === '.' ? (a.includes('.') ? a : (a || '0') + '.') : /\.\d{2}$/.test(a) ? a : a === '0' ? k : a + k
+const Keys = ({ on }) => <div className="keys">{['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '←'].map(k => <button key={k} aria-label={k === '←' ? 'Delete' : k} onClick={() => on(k)}>{k}</button>)}</div>
 const Logo = () => <span className="logo"><img src="/logo-mark.png" alt="" /><span>Solace<b>Fi</b></span></span>
 const Back = ({ go, to = 'home' }) => <button className="back" aria-label="Back" onClick={() => go(to)}><I n="back" s={20} /></button>
 const vibe = () => { try { navigator.vibrate?.(15) } catch {} }
@@ -45,7 +47,7 @@ function TxRow({ t, onClick }) {
   return (
     <button className="row tx" onClick={onClick}>
       <span className="ic"><I n={t.type === 'out' ? 'up' : t.type === 'in' ? 'down' : 'plus'} s={18} /></span>
-      <div style={{ flex: 1, textAlign: 'left' }}><div>{t.label}</div><div className="muted small">{when(t.ts)}</div></div>
+      <div style={{ flex: 1, textAlign: 'left' }}><div>{t.label}</div><div className="muted small">{when(t.ts)}{t.note ? ' · ' + t.note : ''}</div></div>
       <b className={'num amt ' + (t.type === 'out' ? '' : 'pos')}>{t.type === 'out' ? '-' : '+'}{money(t.amount)}</b>
     </button>
   )
@@ -57,7 +59,7 @@ function Sheet({ t, close }) {
       <div className="sheet" role="dialog" aria-modal="true" aria-label="Payment details" onClick={e => e.stopPropagation()}>
         <span className="grab" />
         <div className="center" style={{ gap: 4 }}><span className="num" style={{ fontSize: 40 }}>{t.type === 'out' ? '-' : '+'}{money(t.amount)}</span><span className="muted">{t.label}</span></div>
-        <div><R k="Type" v={kind(t)} /><R k="Status" v="Completed (demo)" /><R k="Time" v={new Date(t.ts).toLocaleString()} /><R k="Receipt" v={t.id} mono /></div>
+        <div><R k="Type" v={kind(t)} /><R k="Status" v="Completed (demo)" />{t.note && <R k="Note" v={t.note} />}<R k="Time" v={new Date(t.ts).toLocaleString()} /><R k="Receipt" v={t.id} mono /></div>
         <button className="btn sec" onClick={close}>Close</button>
       </div>
     </div>
@@ -105,15 +107,19 @@ export default function App() {
   const [to, setTo] = useState('')
   const [amt, setAmt] = useState('')
   const [last, setLast] = useState(null)
+  const [note, setNote] = useState('')
   const [toast, setToast] = useState('')
   const say = m => { setToast(m); vibe(); clearTimeout(window.__t); window.__t = setTimeout(() => setToast(''), 2200) }
   const set = fn => setSt(s => { const n = fn(s); chain.save(n); return n })
   useEffect(() => {
-    const q = new URLSearchParams(location.search).get('pay')
-    if (q && st.user?.payId) { setTo('@' + clean(q)); setScr('send') }
+    const q = new URLSearchParams(location.search)
+    if (q.get('pay') && st.user?.payId) {
+      setTo('@' + clean(q.get('pay'))); const a = q.get('amt'); if (a && /^\d+(\.\d{1,2})?$/.test(a)) setAmt(a)
+      setNote((q.get('note') || '').slice(0, 60)); setScr('send')
+    }
   }, [])
-  const p = { st, set, go: setScr, to, setTo, amt, setAmt, last, setLast, say }
-  const S = { welcome: Welcome, payid: PayId, ready: Ready, home: Home, send: Send, review: Review, done: Done, receive: Receive, activity: Activity, settings: Settings, blocked: Blocked }[scr]
+  const p = { st, set, go: setScr, to, setTo, amt, setAmt, last, setLast, say, note, setNote }
+  const S = { welcome: Welcome, payid: PayId, ready: Ready, home: Home, send: Send, review: Review, done: Done, receive: Receive, request: Request, activity: Activity, settings: Settings, blocked: Blocked }[scr]
   return <main className="app"><div className="scr" key={scr}><S {...p} /></div><div className={'toast' + (toast ? ' show' : '')} role="status" aria-live="polite">{toast}</div></main>
 }
 
@@ -154,18 +160,19 @@ function PayId({ st, set, go }) {
   )
 }
 
-function PayCard({ u, set, say }) {
+function PayCard({ u, set, say, amt = 0, note = '' }) {
   const [qr, setQr] = useState('')
   const mark = () => set && set(s => ({ ...s, settings: { ...s.settings, shared: true } }))
-  const link = `${import.meta.env.VITE_PUBLIC_URL || location.origin}/?pay=${u.payId}`
+  const link = `${import.meta.env.VITE_PUBLIC_URL || location.origin}/?pay=${u.payId}${amt ? '&amt=' + amt : ''}${note ? '&note=' + encodeURIComponent(note) : ''}`
   useEffect(() => { QRCode.toDataURL(link, { margin: 1, width: 360 }).then(setQr).catch(() => {}) }, [link])
   const copy = async () => { try { await navigator.clipboard.writeText('@' + u.payId); say('Pay ID copied'); mark() } catch { say('Copy is not available here') } }
   const share = async () => {
-    try { if (navigator.share) await navigator.share({ title: 'Pay me on SolaceFi', url: link }); else { await navigator.clipboard.writeText(link); say('Link copied') } mark() } catch {}
+    try { if (navigator.share) await navigator.share({ title: 'Pay me on SolaceFi', text: amt ? `Please pay me ${money(amt)} on SolaceFi` : 'Pay me on SolaceFi', url: link }); else { await navigator.clipboard.writeText(link); say('Link copied') } mark() } catch {}
   }
   return (
     <div className="card center">
       <div className="num" style={{ fontSize: 36 }}>@{u.payId}</div>
+      {amt > 0 && <div className="center" style={{ gap: 2 }}><b className="num" style={{ fontSize: 24, color: 'var(--g)' }}>Requesting {money(amt)}</b>{note && <span className="muted small">{note}</span>}</div>}
       {qr && <img className="qr" src={qr} alt={`QR code for @${u.payId}`} />}
       <div className="two"><button className="btn sec" onClick={copy}>Copy Pay ID</button><button className="btn sec" onClick={share}>Share link</button></div>
     </div>
@@ -197,7 +204,8 @@ function Home({ st, set, go, setTo, say }) {
     <div className="acts">
       <button className="act p" onClick={() => go('send')}><span><I n="up" s={24} /></span>Send</button>
       <button className="act" onClick={() => go('receive')}><span><I n="down" s={24} /></span>Receive</button>
-      <button className="act" onClick={() => { set(s => chain.fund(s, 100)); say('Added $100.00 test funds') }}><span><I n="plus" s={24} /></span>Add test funds</button>
+      <button className="act" onClick={() => go('request')}><span><I n="req" s={24} /></span>Request</button>
+      <button className="act" onClick={() => { set(s => chain.fund(s, 100)); say('Added $100.00 test funds') }}><span><I n="plus" s={24} /></span>Add funds</button>
     </div>
     <Start st={st} go={go} set={set} say={say} />
     <Quick st={st} setTo={setTo} go={go} />
@@ -224,29 +232,29 @@ function Activity({ st, go }) {
   </>)
 }
 
-function Send({ st, go, to, setTo, amt, setAmt }) {
+function Send({ st, go, to, setTo, amt, setAmt, note, setNote }) {
   const id = clean(to)
   const rec = id ? chain.lookup(st, id) : null
   const me = id && id === st.user.payId
   const n = parseFloat(amt) || 0
   const err = !id ? '' : me ? 'You cannot send to yourself' : !rec ? 'No account found with that Pay ID' : n > st.balance ? 'Amount is more than your balance' : ''
   const ok = rec && !me && n > 0 && n <= st.balance
-  const key = k => setAmt(a => k === '←' ? a.slice(0, -1) : k === '.' ? (a.includes('.') ? a : (a || '0') + '.') : /\.\d{2}$/.test(a) ? a : a === '0' ? k : a + k)
   return (<>
     <div className="top"><Back go={go} /><h1>Send</h1></div>
     <div className="field"><label htmlFor="t" className="muted small">To</label>
       <input id="t" className="in" value={to} onChange={e => setTo(e.target.value)} placeholder="@adeola" autoComplete="off" autoCapitalize="none" spellCheck="false" />
       <div role="status" style={{ minHeight: 32 }}>
-        {rec && !me && <div className="top" style={{ gap: 10 }}><span className="av">{rec.name[0]}</span><b style={{ fontWeight: 500 }}>{rec.name}</b><span className="mono muted">{short(rec.addr)}</span></div>}
+        {rec && !me && <div className="top" style={{ gap: 10 }}><Av name={rec.name} size={32} /><b style={{ fontWeight: 500 }}>{rec.name}</b><span className="mono muted">{short(rec.addr)}</span></div>}
         {err && <p className="err">{err}</p>}</div></div>
     <div className="center" style={{ gap: 2 }}><div className="num" style={{ fontSize: 52 }}>${amt || '0'}</div><p className="muted small">Available {money(st.balance)}</p></div>
+    <input className="in slim" aria-label="Note (optional)" value={note} maxLength={60} onChange={e => setNote(e.target.value)} placeholder="Add a note (optional)" />
     <div className="seg small-seg">{[5, 10, 25, 50].map(v => <button key={v} onClick={() => setAmt(String(v))}>${v}</button>)}<button onClick={() => setAmt(String(st.balance))}>Max</button></div>
-    <div className="keys">{['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '←'].map(k => <button key={k} aria-label={k === '←' ? 'Delete' : k} onClick={() => key(k)}>{k}</button>)}</div>
+    <Keys on={k => setAmt(a => press(a, k))} />
     <button className="btn" disabled={!ok} onClick={() => go('review')}>Review</button>
   </>)
 }
 
-function Review({ st, set, go, to, amt, setLast }) {
+function Review({ st, set, go, to, amt, setLast, note }) {
   const id = clean(to), rec = chain.lookup(st, id), n = parseFloat(amt)
   const [busy, setBusy] = useState(false)
   const [e, setE] = useState('')
@@ -254,13 +262,13 @@ function Review({ st, set, go, to, amt, setLast }) {
   const send = async () => {
     if (st.settings.frozen) return go('blocked')
     setBusy(true); setE('')
-    try { const t = await chain.send(st, id, n); set(s => chain.apply(s, t)); setLast(t); go('done') }
+    try { const t = await chain.send(st, id, n, note); set(s => chain.apply(s, t)); setLast(t); go('done') }
     catch (x) { setE(x.message || 'Payment failed. Try again.'); setBusy(false) }
   }
   return (<>
     <div className="top"><Back go={go} to="send" /><h1>Review payment</h1></div>
     <div className="center" style={{ gap: 2 }}><div className="num" style={{ fontSize: 48 }}>{money(n)}</div><p className="muted">to @{id}</p></div>
-    <div><R k="Name" v={rec.name} /><R k="Address" v={short(rec.addr)} mono /><R k="Network fee" v="None in demo mode" /></div>
+    <div><R k="Name" v={rec.name} /><R k="Address" v={short(rec.addr)} mono /><R k="Network fee" v="None in demo mode" />{note && <R k="Note" v={note} />}</div>
     <div className="box"><b>Who can see this (when live)</b>
       <span><b>The public:</b> nothing</span><span><b>You and {rec.name}:</b> amount and names</span><span><b>Compliance partner:</b> details, for safety checks</span></div>
     {e && <p className="err" role="alert">{e}</p>}
@@ -270,14 +278,14 @@ function Review({ st, set, go, to, amt, setLast }) {
   </>)
 }
 
-function Done({ go, last, setAmt, setTo }) {
+function Done({ go, last, setAmt, setTo, setNote }) {
   useEffect(() => { vibe() }, [])
   if (!last) return <button className="btn" onClick={() => go('home')}>Home</button>
   return (<>
     <div className="center" style={{ marginTop: 40 }}><span className="okc pop"><I n="check" s={28} /></span><h1>Payment sent</h1>
       <p className="muted">{money(last.amount)} to @{last.to}</p></div>
-    <div><R k="Receipt" v={last.id} mono /><R k="Time" v={new Date(last.ts).toLocaleString()} /><R k="Mode" v="Demo, no blockchain" /></div>
-    <button className="btn" style={{ marginTop: 'auto' }} onClick={() => { setAmt(''); setTo(''); go('home') }}>Done</button>
+    <div><R k="Receipt" v={last.id} mono />{last.note && <R k="Note" v={last.note} />}<R k="Time" v={new Date(last.ts).toLocaleString()} /><R k="Mode" v="Demo, no blockchain" /></div>
+    <button className="btn" style={{ marginTop: 'auto' }} onClick={() => { setAmt(''); setTo(''); setNote(''); go('home') }}>Done</button>
   </>)
 }
 
@@ -285,8 +293,27 @@ function Receive({ st, go, set, say }) {
   return (<>
     <div className="top"><Back go={go} /><h1>Receive</h1></div>
     <PayCard u={st.user} set={set} say={say} />
+    <button className="btn sec" onClick={() => go('request')}>Request a specific amount</button>
     <p className="muted small center">Anyone with your Pay ID can send you money.</p>
     <Nav on="receive" go={go} />
+  </>)
+}
+
+function Request({ st, go, set, say }) {
+  const [amt, setA] = useState(''), [note, setN] = useState(''), [made, setMade] = useState(false)
+  const n = parseFloat(amt) || 0
+  if (made) return (<>
+    <div className="top"><Back go={() => setMade(false)} /><h1>Your request</h1></div>
+    <PayCard u={st.user} set={set} say={say} amt={n} note={note} />
+    <p className="muted small center">Whoever opens this link or scans the code gets a payment screen with the amount filled in.</p>
+    <button className="btn sec" onClick={() => go('home')} style={{ marginTop: 'auto' }}>Done</button>
+  </>)
+  return (<>
+    <div className="top"><Back go={go} /><h1>Request money</h1></div>
+    <div className="center" style={{ gap: 2 }}><div className="num" style={{ fontSize: 52 }}>${amt || '0'}</div><p className="muted small">How much do you want to receive?</p></div>
+    <input className="in slim" aria-label="Note (optional)" value={note} maxLength={60} onChange={e => setN(e.target.value)} placeholder="What is it for? (optional)" />
+    <Keys on={k => setA(a => press(a, k))} />
+    <button className="btn" disabled={!(n > 0)} onClick={() => setMade(true)}>Create request</button>
   </>)
 }
 
@@ -307,7 +334,7 @@ function Settings({ st, set, go }) {
       <p className="muted small">Preferences are saved. Alerts start when the real app launches.</p></section>
     <section className="grp off"><h2>Security</h2><R k="Passkey" v="Coming soon" /><R k="App lock" v="Coming soon" /><R k="Recovery method" v="Coming soon" /></section>
     <section className="grp"><h2>Demo tools</h2>{tog('frozen', 'Simulate a paused account')}</section>
-    <section className="grp"><h2>About</h2><R k="Version" v="0.3.0 (demo)" /><R k="Network" v="None. Demo mode." />
+    <section className="grp"><h2>About</h2><R k="Version" v="0.4.0 (demo)" /><R k="Network" v="None. Demo mode." />
       <R k="Support" v={<a href="mailto:Solacefipay@gmail.com" style={{ color: 'var(--g)' }}>Email us</a>} /></section>
     <button className="btn sec" onClick={() => reset('Log out? In demo mode this clears the demo data on this device.')}>Log out</button>
     <button className="btn sec danger" onClick={() => reset('Delete your demo account and all demo data on this device?')}>Delete account</button>

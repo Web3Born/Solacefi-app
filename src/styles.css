@@ -88,3 +88,7 @@ details{border-top:1px solid var(--line);padding:12px 0}summary{cursor:pointer}d
 .toast{position:fixed;left:50%;bottom:104px;transform:translate(-50%,20px);background:#EAF3F0;color:#04140D;padding:10px 18px;border-radius:99px;font-size:14px;font-weight:500;opacity:0;pointer-events:none;transition:.25s;z-index:30;box-shadow:0 8px 24px rgba(0,0,0,.4)}.toast.show{opacity:1;transform:translate(-50%,0)}
 .okc.pop{animation:pop .5s cubic-bezier(.2,1.4,.4,1)}@keyframes pop{from{transform:scale(.3);opacity:0}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.in.slim{height:46px;font-size:15px}
+.acts .act{min-width:64px}
+.toast{white-space:nowrap}

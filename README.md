@@ -1,4 +1,4 @@
-# SolaceFi app (demo v0.3)
+# SolaceFi app (demo v0.4)
 
 A working React app (Vite) with every prototype screen: sign-up, Pay ID, receive with QR code,
 send with review, activity, settings, and the paused-account state.
