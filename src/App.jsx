@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import QRCode from 'qrcode'
 import * as chain from './chain.js'
+import { loadLock, saveLock, makeLock, check, weak, failed, cleared } from './lock.js'
 
 const P = {
   up: 'M7 17L17 7M8 7h9v9', down: 'M17 7L7 17M16 17H7V8', plus: 'M12 5v14M5 12h14', back: 'M15 6l-6 6 6 6',
@@ -109,8 +110,18 @@ export default function App() {
   const [last, setLast] = useState(null)
   const [note, setNote] = useState('')
   const [toast, setToast] = useState('')
+  const [lock, setLockS] = useState(loadLock)
+  const [locked, setLocked] = useState(() => !!loadLock() && !!chain.load().user)
+  const [pinMode, setPinMode] = useState('set')
+  const setLock = l => { saveLock(l); setLockS(l) }
   const say = m => { setToast(m); vibe(); clearTimeout(window.__t); window.__t = setTimeout(() => setToast(''), 2200) }
   const set = fn => setSt(s => { const n = fn(s); chain.save(n); return n })
+  const reset = () => { set(() => chain.fresh()); setLock(null); setLocked(false); setScr('welcome') }
+  useEffect(() => {
+    let t = 0
+    const f = () => { if (document.hidden) t = Date.now(); else if (lock && t && (Date.now() - t) / 1000 >= lock.after) setLocked(true) }
+    document.addEventListener('visibilitychange', f); return () => document.removeEventListener('visibilitychange', f)
+  }, [lock])
   useEffect(() => {
     const q = new URLSearchParams(location.search)
     if (q.get('pay') && st.user?.payId) {
@@ -118,8 +129,9 @@ export default function App() {
       setNote((q.get('note') || '').slice(0, 60)); setScr('send')
     }
   }, [])
-  const p = { st, set, go: setScr, to, setTo, amt, setAmt, last, setLast, say, note, setNote }
-  const S = { welcome: Welcome, payid: PayId, ready: Ready, home: Home, send: Send, review: Review, done: Done, receive: Receive, request: Request, activity: Activity, settings: Settings, blocked: Blocked }[scr]
+  const p = { st, set, go: setScr, to, setTo, amt, setAmt, last, setLast, say, note, setNote, lock, setLock, pinMode, setPinMode, reset }
+  const S = { welcome: Welcome, payid: PayId, ready: Ready, home: Home, send: Send, review: Review, done: Done, receive: Receive, request: Request, pin: Pin, activity: Activity, settings: Settings, blocked: Blocked }[scr]
+  if (locked && lock) return <main className="app"><div className="scr"><LockScreen lock={lock} setLock={setLock} open={() => setLocked(false)} reset={reset} /></div></main>
   return <main className="app"><div className="scr" key={scr}><S {...p} /></div><div className={'toast' + (toast ? ' show' : '')} role="status" aria-live="polite">{toast}</div></main>
 }
 
@@ -317,11 +329,60 @@ function Request({ st, go, set, say }) {
   </>)
 }
 
-function Settings({ st, set, go }) {
+function PinPad({ value, onKey, error, disabled }) {
+  return (<>
+    <div className={'dots' + (error ? ' shake' : '')} role="img" aria-label={`${value.length} of 6 digits entered`}>{[...Array(6)].map((_, i) => <span key={i} className={i < value.length ? 'on' : ''} />)}</div>
+    <p className="err center" role="alert" style={{ minHeight: 22 }}>{error}</p>
+    <div className="keys">{['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '←'].map(k => k === '' ? <span key="gap" /> : <button key={k} disabled={disabled} aria-label={k === '←' ? 'Delete' : k} onClick={() => onKey(k)}>{k}</button>)}</div>
+  </>)
+}
+function LockScreen({ lock, setLock, open, reset }) {
+  const [pin, setPin] = useState(''), [err, setErr] = useState(''), [now, setNow] = useState(Date.now())
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 500); return () => clearInterval(t) }, [])
+  const wait = Math.max(0, Math.ceil((lock.until - now) / 1000))
+  const done = async p => {
+    if (await check(lock, p)) { setLock(cleared(lock)); open(); return }
+    const l = failed(lock); setLock(l); setPin('')
+    setErr(l.until ? 'Too many tries. Please wait.' : `Wrong PIN. ${5 - l.fails} tries left.`)
+  }
+  const key = k => { if (wait) return; if (k === '←') return setPin(p => p.slice(0, -1)); if (pin.length >= 6) return; const n = pin + k; setPin(n); if (n.length === 6) done(n) }
+  return (<>
+    <Logo />
+    <div className="center" style={{ gap: 6 }}><h1>Enter your PIN</h1><p className="muted small">{wait ? `Try again in ${wait}s` : 'SolaceFi is locked'}</p></div>
+    <PinPad value={pin} onKey={key} error={err} disabled={!!wait} />
+    <button className="link" style={{ marginTop: 'auto' }} onClick={() => confirm('In demo mode there is no recovery. This clears all demo data on this device. Continue?') && reset()}>Forgot PIN?</button>
+  </>)
+}
+function Pin({ go, lock, setLock, say, pinMode }) {
+  const [stage, setStage] = useState(pinMode === 'set' ? 'new' : 'verify'), [pin, setPin] = useState(''), [first, setFirst] = useState(''), [err, setErr] = useState('')
+  const title = { verify: 'Enter your current PIN', new: 'Choose a 6-digit PIN', confirm: 'Confirm your PIN' }[stage]
+  const done = async p => {
+    setErr(''); setPin('')
+    if (stage === 'verify') {
+      if (!(await check(lock, p))) return setErr('Wrong PIN')
+      if (pinMode === 'off') { setLock(null); say('App lock is off'); return go('settings') }
+      setStage('new')
+    } else if (stage === 'new') {
+      if (weak(p)) return setErr('Choose a less obvious PIN')
+      setFirst(p); setStage('confirm')
+    } else if (p === first) { setLock(await makeLock(p, lock?.after ?? 60)); say('App lock is on'); go('settings') }
+    else { setErr('PINs did not match. Try again.'); setStage('new') }
+  }
+  const key = k => { if (k === '←') return setPin(p => p.slice(0, -1)); if (pin.length >= 6) return; const n = pin + k; setPin(n); if (n.length === 6) done(n) }
+  return (<>
+    <div className="top"><Back go={go} to="settings" /><h1 style={{ fontSize: 26 }}>{title}</h1></div>
+    <p className="muted small center">The PIN stays on this device. It locks the app when you leave it.</p>
+    <PinPad value={pin} onKey={key} error={err} />
+  </>)
+}
+
+function Settings({ st, set, go, lock, setLock, setPinMode, reset: doReset }) {
   const s = st.settings
   const [name, setName] = useState(st.user.name)
   const tog = (k, l) => <label className="tog"><span>{l}</span><input type="checkbox" role="switch" checked={!!s[k]} onChange={e => set(x => ({ ...x, settings: { ...x.settings, [k]: e.target.checked } }))} /></label>
-  const reset = msg => { if (confirm(msg)) { set(() => chain.fresh()); go('welcome') } }
+  const reset = msg => { if (confirm(msg)) doReset() }
+  const pin = m => { setPinMode(m); go('pin') }
+  const after = v => setLock({ ...lock, after: v })
   return (<>
     <h1>Settings</h1>
     <section className="grp"><h2>Profile</h2>
@@ -332,9 +393,13 @@ function Settings({ st, set, go }) {
       <details><summary>What is private?</summary><p>When live, private transfers are designed to be hidden from the public, while you, the recipient and a compliance partner can see details. Deposits and cash-outs are public steps. This demo does not use a blockchain.</p></details></section>
     <section className="grp"><h2>Notifications</h2>{tog('recv', 'Payments received')}{tog('sent', 'Payments sent')}{tog('sec', 'Security alerts')}{tog('news', 'Product news')}
       <p className="muted small">Preferences are saved. Alerts start when the real app launches.</p></section>
-    <section className="grp off"><h2>Security</h2><R k="Passkey" v="Coming soon" /><R k="App lock" v="Coming soon" /><R k="Recovery method" v="Coming soon" /></section>
+    <section className="grp"><h2>Security</h2>
+      <button className="rowbtn" onClick={() => pin(lock ? 'off' : 'set')}><span>App lock (PIN)</span><span className={lock ? 'ok' : 'muted'}>{lock ? 'On' : 'Off'}</span></button>
+      {lock && <button className="rowbtn" onClick={() => pin('change')}><span>Change PIN</span><span className="muted">›</span></button>}
+      {lock && <div className="rowbtn" style={{ display: 'grid', gap: 8 }}><span>Lock after leaving the app</span><div className="seg small-seg">{[[0, 'Right away'], [60, '1 min'], [300, '5 min']].map(([v, l]) => <button key={v} className={lock.after === v ? 'on' : ''} onClick={() => after(v)}>{l}</button>)}</div></div>}
+      <div className="off"><R k="Passkey" v="Coming soon" /><R k="Recovery method" v="Coming soon" /><R k="Face or fingerprint unlock" v="Coming soon" /></div></section>
     <section className="grp"><h2>Demo tools</h2>{tog('frozen', 'Simulate a paused account')}</section>
-    <section className="grp"><h2>About</h2><R k="Version" v="0.4.0 (demo)" /><R k="Network" v="None. Demo mode." />
+    <section className="grp"><h2>About</h2><R k="Version" v="0.5.0 (demo)" /><R k="Network" v="None. Demo mode." />
       <R k="Support" v={<a href="mailto:Solacefipay@gmail.com" style={{ color: 'var(--g)' }}>Email us</a>} /></section>
     <button className="btn sec" onClick={() => reset('Log out? In demo mode this clears the demo data on this device.')}>Log out</button>
     <button className="btn sec danger" onClick={() => reset('Delete your demo account and all demo data on this device?')}>Delete account</button>

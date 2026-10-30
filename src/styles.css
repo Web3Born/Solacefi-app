@@ -92,3 +92,10 @@ details{border-top:1px solid var(--line);padding:12px 0}summary{cursor:pointer}d
 .in.slim{height:46px;font-size:15px}
 .acts .act{min-width:64px}
 .toast{white-space:nowrap}
+
+.dots{display:flex;justify-content:center;gap:16px;margin-top:8px}
+.dots span{width:16px;height:16px;border-radius:50%;border:2px solid #3a5a64;transition:.15s}
+.dots span.on{background:var(--g);border-color:var(--g);transform:scale(1.1)}
+.shake{animation:shake .4s}@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.rowbtn{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:0;border-top:1px solid var(--line);padding:14px 0;text-align:left;font-size:16px}
+.small-seg button{white-space:nowrap;padding:0 12px}

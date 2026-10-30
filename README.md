@@ -1,4 +1,4 @@
-# SolaceFi app (demo v0.4)
+# SolaceFi app (demo v0.5)
 
 A working React app (Vite) with every prototype screen: sign-up, Pay ID, receive with QR code,
 send with review, activity, settings, and the paused-account state.
@@ -29,7 +29,13 @@ Wallet connection guide: https://developer.aleo.org/guides/wallets/universal_wal
 Do not move real funds before security review and legal advice.
 
 ## Known gaps
-No real sign-in verification, passkeys, app lock, recovery, notifications or service worker yet.
+No real sign-in verification, passkeys, recovery, face/fingerprint unlock, notifications or service worker yet.
+
+## App lock (PIN)
+Settings > Security > App lock sets a 6-digit PIN. Only a salted PBKDF2 hash is stored, on this device.
+The app locks on launch and after you leave it (right away, 1 or 5 minutes). Five wrong tries trigger waiting periods.
+This protects the screen from someone picking up your phone. It does not encrypt wallet keys, and in demo mode
+"Forgot PIN" clears demo data because there is no account recovery yet.
 
 ## Android app (APK)
 Capacitor wraps this web app as a real Android app. The GitHub Action `.github/workflows/android.yml`
