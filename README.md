@@ -48,3 +48,8 @@ Pushing a workflow file needs a GitHub token with the `workflow` scope.
 The app ID `com.solacefi.app` cannot change after a Play Store release. Debug APKs are for testing only;
 a store release needs a signed build, a Play developer account and the checks listed above.
 iOS needs a Mac or a cloud Mac service (not set up yet).
+
+## Updating the Android app
+Debug APKs are now signed with a fixed key (`ci/debug.keystore`, a public debug key, never for store releases),
+so a new APK installs over the old one. APKs built before v0.5.2 used a different random key each run:
+uninstall the old SolaceFi app once, then install the new APK. Check Settings > About > Version to confirm the update.
