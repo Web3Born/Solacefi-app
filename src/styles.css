@@ -99,3 +99,11 @@ details{border-top:1px solid var(--line);padding:12px 0}summary{cursor:pointer}d
 .shake{animation:shake .4s}@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 .rowbtn{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:0;border-top:1px solid var(--line);padding:14px 0;text-align:left;font-size:16px}
 .small-seg button{white-space:nowrap;padding:0 12px}
+
+.dots.big{gap:22px;margin:6px 0}.dots.big span{width:20px;height:20px;border-width:2px}.dots.bad span{border-color:#ff8a8a}
+.pkeys{display:grid;grid-template-columns:repeat(3,1fr);justify-items:center;gap:clamp(10px,2.2vh,22px) 0;margin:4px auto 0;width:100%;max-width:340px}
+.pkeys button{width:clamp(64px,20vw,84px);height:clamp(64px,20vw,84px);border-radius:50%;border:0;background:#0f2230;color:var(--text);font:500 clamp(28px,8.5vw,36px) Outfit,Inter,sans-serif;display:grid;place-items:center;transition:transform .1s,background .15s}
+.pkeys button:active:not(:disabled){transform:scale(.92);background:#1b4a3f}
+.pkeys button.del{background:transparent;color:var(--muted)}.pkeys button:disabled{opacity:.4}
+.lockhead{gap:8px;margin-top:8px}.lockhead h1{font-size:28px}
+@media(max-height:700px){.pkeys button{width:58px;height:58px;font-size:26px}.lockhead h1{font-size:24px}.lockhead .av{width:52px!important;height:52px!important;font-size:22px!important}.scr{gap:12px}.dots.big span{width:16px;height:16px}}

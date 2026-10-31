@@ -9,7 +9,7 @@ const P = {
   home: 'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10', qr: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h3v3h-3zM20 14v6h-6',
   gear: 'M12 8a4 4 0 100 8 4 4 0 000-8zM4 12h2M18 12h2M12 4v2M12 18v2', check: 'M5 12l5 5L20 7',
   eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 100 6 3 3 0 000-6z',
-  lock: 'M5 11h14v10H5zM8 11V8a4 4 0 018 0v3', req: 'M3 6h18v12H3zM3 7l9 6 9-6', list: 'M4 6h16M4 12h16M4 18h10', alert: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v6M12 16.5h.01'
+  lock: 'M5 11h14v10H5zM8 11V8a4 4 0 018 0v3', del: 'M21 5H9l-6 7 6 7h12zM15 9l-4 6M11 9l4 6', req: 'M3 6h18v12H3zM3 7l9 6 9-6', list: 'M4 6h16M4 12h16M4 18h10', alert: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v6M12 16.5h.01'
 }
 const I = ({ n, s = 22 }) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={P[n]} /></svg>
 const money = n => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -135,7 +135,7 @@ export default function App() {
   }, [])
   const p = { st, set, go: setScr, to, setTo, amt, setAmt, last, setLast, say, note, setNote, lock, setLock, pinMode, setPinMode, reset }
   const S = { welcome: Welcome, payid: PayId, ready: Ready, home: Home, send: Send, review: Review, done: Done, receive: Receive, request: Request, pin: Pin, activity: Activity, settings: Settings, blocked: Blocked }[scr]
-  if (locked && lock) return <main className="app"><div className="scr"><LockScreen lock={lock} setLock={setLock} open={() => setLocked(false)} reset={reset} /></div></main>
+  if (locked && lock) return <main className="app"><div className="scr"><LockScreen lock={lock} setLock={setLock} open={() => setLocked(false)} reset={reset} user={st.user} /></div></main>
   return <main className="app"><div className="scr" key={scr}><S {...p} /></div><div className={'toast' + (toast ? ' show' : '')} role="status" aria-live="polite">{toast}</div></main>
 }
 
@@ -334,13 +334,15 @@ function Request({ st, go, set, say }) {
 }
 
 function PinPad({ value, onKey, error, disabled }) {
+  const press = k => { try { navigator.vibrate?.(8) } catch {} onKey(k) }
   return (<>
-    <div className={'dots' + (error ? ' shake' : '')} role="img" aria-label={`${value.length} of 6 digits entered`}>{[...Array(6)].map((_, i) => <span key={i} className={i < value.length ? 'on' : ''} />)}</div>
-    <p className="err center" role="alert" style={{ minHeight: 22 }}>{error}</p>
-    <div className="keys">{['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '←'].map(k => k === '' ? <span key="gap" /> : <button key={k} disabled={disabled} aria-label={k === '←' ? 'Delete' : k} onClick={() => onKey(k)}>{k}</button>)}</div>
+    <div className={'dots big' + (error ? ' shake bad' : '')} role="img" aria-label={`${value.length} of 6 digits entered`}>{[...Array(6)].map((_, i) => <span key={i} className={i < value.length ? 'on' : ''} />)}</div>
+    <p className="err center" role="alert" style={{ minHeight: 24 }}>{error}</p>
+    <div className="pkeys">{['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '←'].map(k => k === '' ? <span key="gap" /> : <button key={k} className={k === '←' ? 'del' : ''} disabled={disabled} aria-label={k === '←' ? 'Delete' : k} onClick={() => press(k)}>{k === '←' ? <I n="del" s={30} /> : k}</button>)}</div>
   </>)
 }
-function LockScreen({ lock, setLock, open, reset }) {
+const mask = c => !c ? '' : c.includes('@') ? c.replace(/^(.{2}).*(@.*)$/, '$1•••$2') : '•••' + c.slice(-4)
+function LockScreen({ lock, setLock, open, reset, user }) {
   const [pin, setPin] = useState(''), [err, setErr] = useState(''), [now, setNow] = useState(Date.now())
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 500); return () => clearInterval(t) }, [])
   const wait = Math.max(0, Math.ceil((lock.until - now) / 1000))
@@ -353,8 +355,8 @@ function LockScreen({ lock, setLock, open, reset }) {
   }
   const key = k => { if (wait) return; if (k === '←') return setPin(p => p.slice(0, -1)); if (pin.length >= 6) return; const n = pin + k; setPin(n); if (n.length === 6) done(n) }
   return (<>
-    <Logo />
-    <div className="center" style={{ gap: 6 }}><h1>Enter your PIN</h1><p className="muted small">{wait ? `Try again in ${wait}s` : 'SolaceFi is locked'}</p></div>
+    <div className="center lockhead"><Av name={user?.name || 'S'} size={72} /><h1>Welcome back{user?.name ? ', ' + user.name : ''}</h1><p className="muted small">{user?.contact ? mask(user.contact) : 'SolaceFi is locked'}</p>
+      <p className="muted">{wait ? `Try again in ${wait}s` : 'Enter your 6-digit PIN'}</p></div>
     <PinPad value={pin} onKey={key} error={err} disabled={!!wait} />
     <button className="link" style={{ marginTop: 'auto' }} onClick={() => confirm('In demo mode there is no recovery. This clears all demo data on this device. Continue?') && reset()}>Forgot PIN?</button>
   </>)
@@ -407,7 +409,7 @@ function Settings({ st, set, go, lock, setLock, setPinMode, reset: doReset }) {
       {lock && <div className="rowbtn" style={{ display: 'grid', gap: 8 }}><span>Lock after leaving the app</span><div className="seg small-seg">{[[0, 'Right away'], [60, '1 min'], [300, '5 min']].map(([v, l]) => <button key={v} className={lock.after === v ? 'on' : ''} onClick={() => after(v)}>{l}</button>)}</div></div>}
       <div className="off"><R k="Passkey" v="Coming soon" /><R k="Recovery method" v="Coming soon" /><R k="Face or fingerprint unlock" v="Coming soon" /></div></section>
     <section className="grp"><h2>Demo tools</h2>{tog('frozen', 'Simulate a paused account')}</section>
-    <section className="grp"><h2>About</h2><R k="Version" v="0.5.4 (demo)" /><R k="Network" v="None. Demo mode." /><R k="Secure storage" v={secure() ? 'Yes' : 'Basic mode'} />
+    <section className="grp"><h2>About</h2><R k="Version" v="0.6.0 (demo)" /><R k="Network" v="None. Demo mode." /><R k="Secure storage" v={secure() ? 'Yes' : 'Basic mode'} />
       <R k="Support" v={<a href="mailto:Solacefipay@gmail.com" style={{ color: 'var(--g)' }}>Email us</a>} /></section>
     <button className="btn sec" onClick={() => reset('Log out? In demo mode this clears the demo data on this device.')}>Log out</button>
     <button className="btn sec danger" onClick={() => reset('Delete your demo account and all demo data on this device?')}>Delete account</button>
