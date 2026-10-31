@@ -9,7 +9,7 @@ const P = {
   home: 'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10', qr: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h3v3h-3zM20 14v6h-6',
   gear: 'M12 8a4 4 0 100 8 4 4 0 000-8zM4 12h2M18 12h2M12 4v2M12 18v2', check: 'M5 12l5 5L20 7',
   eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 100 6 3 3 0 000-6z',
-  lock: 'M5 11h14v10H5zM8 11V8a4 4 0 018 0v3', del: 'M21 5H9l-6 7 6 7h12zM15 9l-4 6M11 9l4 6', req: 'M3 6h18v12H3zM3 7l9 6 9-6', list: 'M4 6h16M4 12h16M4 18h10', alert: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v6M12 16.5h.01'
+  lock: 'M5 11h14v10H5zM8 11V8a4 4 0 018 0v3', del: 'M21 5H9l-6 7 6 7h12zM15 9l-4 6M11 9l4 6', bell: 'M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0', help: 'M12 3a9 9 0 100 18 9 9 0 000-18zM9.5 9a2.5 2.5 0 115 0c0 1.5-2.5 2-2.5 3.5M12 17h.01', phone: 'M7 2h10v20H7zM11 18h2', vault: 'M4 5h16v14H4zM12 9a3 3 0 100 6 3 3 0 000-6zM4 9h2M4 15h2', shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4', more: 'M6 12h.01M12 12h.01M18 12h.01', wifi: 'M2 9a15 15 0 0120 0M5 13a10 10 0 0114 0M9 17a4 4 0 016 0M12 20h.01', tv: 'M3 7h18v12H3zM8 3l4 4 4-4', card2: 'M3 6h18v12H3zM3 10h18', req: 'M3 6h18v12H3zM3 7l9 6 9-6', list: 'M4 6h16M4 12h16M4 18h10', alert: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v6M12 16.5h.01'
 }
 const I = ({ n, s = 22 }) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={P[n]} /></svg>
 const money = n => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -17,7 +17,7 @@ const short = a => a.slice(0, 8) + '…' + a.slice(-4)
 const when = t => { const d = Math.floor((Date.now() - t) / 864e5); return d < 1 ? 'Today' : d < 2 ? 'Yesterday' : new Date(t).toLocaleDateString() }
 const nm = c => c.includes('@') ? c.split('@')[0].replace(/^./, x => x.toUpperCase()) : 'Friend'
 const clean = v => v.toLowerCase().replace(/^@/, '').trim()
-const VERSION = '0.6.1'
+const VERSION = '0.7.0'
 const press = (a, k) => k === '←' ? a.slice(0, -1) : k === '.' ? (a.includes('.') ? a : (a || '0') + '.') : /\.\d{2}$/.test(a) ? a : a === '0' ? k : a + k
 const Keys = ({ on }) => <div className="keys">{['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '←'].map(k => <button key={k} aria-label={k === '←' ? 'Delete' : k} onClick={() => on(k)}>{k}</button>)}</div>
 const Logo = () => <span className="logo"><img src="/logo-mark.png" alt="" /><span>Solace<b>Fi</b></span></span>
@@ -25,7 +25,10 @@ const Back = ({ go, to = 'home' }) => <button className="back" aria-label="Back"
 const vibe = () => { try { navigator.vibrate?.(15) } catch {} }
 const hue = x => [...x].reduce((a, c) => a + c.charCodeAt(0), 0) * 37 % 360
 const Av = ({ name, size = 40 }) => <span className="av" style={{ width: size, height: size, background: `hsl(${hue(name)} 70% 62%)`, fontSize: size * .42 }}>{name[0].toUpperCase()}</span>
-const kind = t => t.type === 'out' ? 'Sent' : t.type === 'in' ? 'Received' : 'Test funds'
+const NEG = ['out', 'vault', 'bill']
+const neg = t => NEG.includes(t.type)
+const ICON = { out: 'up', in: 'down', fund: 'plus', bill: 'phone', vault: 'vault', unvault: 'vault' }
+const kind = t => ({ out: 'Sent', in: 'Received', fund: 'Test funds', bill: 'Top-up', vault: 'Saved to Vault', unvault: 'From Vault' }[t.type])
 function useCount(v) {
   const [x, setX] = useState(v)
   useEffect(() => {
@@ -42,16 +45,16 @@ const Nav = ({ on, go }) => {
     <nav className="nav" aria-label="Main">
       {[['home', 'Home', 'home'], ['activity', 'Activity', 'list']].map(b)}
       <button className="fab" aria-label="Send money" onClick={() => go('send')}><I n="up" s={26} /></button>
-      {[['receive', 'Receive', 'qr'], ['settings', 'Settings', 'gear']].map(b)}
+      {[['vault', 'Vault', 'vault'], ['settings', 'Me', 'gear']].map(b)}
     </nav>
   )
 }
 function TxRow({ t, onClick }) {
   return (
     <button className="row tx" onClick={onClick}>
-      <span className="ic"><I n={t.type === 'out' ? 'up' : t.type === 'in' ? 'down' : 'plus'} s={18} /></span>
+      <span className="ic"><I n={ICON[t.type] || 'plus'} s={18} /></span>
       <div style={{ flex: 1, textAlign: 'left' }}><div>{t.label}</div><div className="muted small">{when(t.ts)}{t.note ? ' · ' + t.note : ''}</div></div>
-      <b className={'num amt ' + (t.type === 'out' ? '' : 'pos')}>{t.type === 'out' ? '-' : '+'}{money(t.amount)}</b>
+      <b className={'num amt ' + (neg(t) ? '' : 'pos')}>{neg(t) ? '-' : '+'}{money(t.amount)}</b>
     </button>
   )
 }
@@ -61,7 +64,7 @@ function Sheet({ t, close }) {
     <div className="scrim" onClick={close}>
       <div className="sheet" role="dialog" aria-modal="true" aria-label="Payment details" onClick={e => e.stopPropagation()}>
         <span className="grab" />
-        <div className="center" style={{ gap: 4 }}><span className="num" style={{ fontSize: 40 }}>{t.type === 'out' ? '-' : '+'}{money(t.amount)}</span><span className="muted">{t.label}</span></div>
+        <div className="center" style={{ gap: 4 }}><span className="num" style={{ fontSize: 40 }}>{neg(t) ? '-' : '+'}{money(t.amount)}</span><span className="muted">{t.label}</span></div>
         <div><R k="Type" v={kind(t)} /><R k="Status" v="Completed (demo)" />{t.note && <R k="Note" v={t.note} />}<R k="Time" v={new Date(t.ts).toLocaleString()} /><R k="Receipt" v={t.id} mono /></div>
         <button className="btn sec" onClick={close}>Close</button>
       </div>
@@ -70,7 +73,7 @@ function Sheet({ t, close }) {
 }
 function Week({ txs }) {
   const days = [...Array(7)].map((_, i) => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - 6 + i); return { t: d.getTime(), l: d.toLocaleDateString('en', { weekday: 'narrow' }), i: 0, o: 0 } })
-  txs.forEach(x => { const d = days.find(d => x.ts >= d.t && x.ts < d.t + 864e5); if (d) d[x.type === 'out' ? 'o' : 'i'] += x.amount })
+  txs.forEach(x => { const d = days.find(d => x.ts >= d.t && x.ts < d.t + 864e5); if (d) d[neg(x) ? 'o' : 'i'] += x.amount })
   const max = Math.max(1, ...days.flatMap(d => [d.i, d.o])), tin = days.reduce((a, d) => a + d.i, 0), tout = days.reduce((a, d) => a + d.o, 0)
   return (
     <section className="wid"><div className="between"><h2>This week</h2><span className="muted small">Last 7 days</span></div>
@@ -111,6 +114,7 @@ export default function App() {
   const [amt, setAmt] = useState('')
   const [last, setLast] = useState(null)
   const [note, setNote] = useState('')
+  const [svc, setSvc] = useState('airtime')
   const [toast, setToast] = useState('')
   const [lock, setLockS] = useState(loadLock)
   const [locked, setLocked] = useState(() => !!loadLock() && !!chain.load().user)
@@ -134,8 +138,8 @@ export default function App() {
       setNote((q.get('note') || '').slice(0, 60)); setScr('send')
     }
   }, [])
-  const p = { st, set, go: setScr, to, setTo, amt, setAmt, last, setLast, say, note, setNote, lock, setLock, pinMode, setPinMode, reset }
-  const S = { welcome: Welcome, payid: PayId, ready: Ready, home: Home, send: Send, review: Review, done: Done, receive: Receive, request: Request, pin: Pin, activity: Activity, settings: Settings, blocked: Blocked }[scr]
+  const p = { st, set, go: setScr, to, setTo, amt, setAmt, last, setLast, say, note, setNote, lock, setLock, pinMode, setPinMode, reset, svc, setSvc }
+  const S = { welcome: Welcome, payid: PayId, ready: Ready, home: Home, send: Send, review: Review, done: Done, receive: Receive, request: Request, pin: Pin, notifs: Notifs, topup: TopUp, vault: Vault, privacy: Privacy, activity: Activity, settings: Settings, blocked: Blocked }[scr]
   if (locked && lock) return <main className="app"><div className="scr"><LockScreen lock={lock} setLock={setLock} open={() => setLocked(false)} reset={reset} user={st.user} /></div></main>
   return <main className="app"><div className="scr" key={scr}><S {...p} /></div><div className={'toast' + (toast ? ' show' : '')} role="status" aria-live="polite">{toast}</div></main>
 }
@@ -206,38 +210,125 @@ function Ready({ st, go, set, say }) {
   </>)
 }
 
-function Home({ st, set, go, setTo, say }) {
+const notifList = (st, lock) => {
+  const l = st.txs.slice(0, 15).map(t => ({ id: t.id, ts: t.ts, title: kind(t), text: `${neg(t) ? '-' : '+'}${money(t.amount)} · ${t.label}` }))
+  if (!lock) l.push({ id: 'tip-pin', ts: 2, title: 'Secure your app', text: 'Turn on the PIN lock in Settings.' })
+  l.push({ id: 'welcome', ts: 1, title: 'Welcome to SolaceFi', text: 'This is a demo. No real money and no blockchain yet.' })
+  return l
+}
+const checkup = (st, lock) => [
+  { k: 'App lock (PIN) is on', ok: !!lock, fix: 'pin' },
+  { k: 'Balance is hidden on Home', ok: st.settings.hide, fix: 'hide' },
+  { k: 'Security alerts are on', ok: st.settings.sec, fix: 'sec' },
+  { k: 'Auto-lock is 1 minute or less', ok: !!lock && lock.after <= 60, fix: 'pin2' }
+]
+function Home({ st, set, go, setTo, say, lock, setPinMode, setSvc }) {
   const h = st.settings.hide, bal = useCount(st.balance)
   const [sel, setSel] = useState(null)
+  const unread = notifList(st, lock).filter(n => n.ts > st.seen).length
+  const ck = checkup(st, lock), done = ck.filter(c => c.ok).length
+  const fund = () => { set(s => chain.fund(s, 100)); say('Added $100.00 test funds') }
+  const prompt = !lock ? ['Secure your app with a PIN', 'Takes about 20 seconds', 'Set up', () => { setPinMode('set'); go('pin') }]
+    : st.txs.length === 0 ? ['Add test funds to try a payment', 'Free demo money', 'Add', fund] : null
+  const svcs = [['Airtime', 'phone', () => { setSvc('airtime'); go('topup') }], ['Data', 'wifi', () => { setSvc('data'); go('topup') }], ['Vault', 'vault', () => go('vault')], ['Privacy', 'shield', () => go('privacy')],
+    ['Bills', 'list', () => say('Bills are coming soon')], ['TV', 'tv', () => say('TV is coming soon')], ['Cards', 'card2', () => say('Cards are coming soon')], ['More', 'more', () => say('More services are on the way')]]
+  const goal = st.goals[0]
   return (<>
-    <div className="between"><div><p className="muted small">Hello</p><h2 style={{ fontSize: 24 }}>{st.user.name}</h2></div><span className="tag">Demo mode</span></div>
+    <div className="between">
+      <button className="who" onClick={() => go('settings')} aria-label="Open profile"><Av name={st.user.name} size={44} /><span>Hi, {st.user.name}</span></button>
+      <div className="hdr">
+        <a className="ib" href="mailto:Solacefipay@gmail.com" aria-label="Help"><I n="help" /></a>
+        <button className="ib" aria-label={'Notifications' + (unread ? `, ${unread} new` : '')} onClick={() => go('notifs')}><I n="bell" />{unread > 0 && <b className="badge">{unread}</b>}</button>
+      </div>
+    </div>
     <div className="card bal">
-      <div className="between"><span className="small" style={{ color: '#a9c9c1' }}>Balance</span>
-        <button className="eye" aria-label={h ? 'Show balance' : 'Hide balance'} onClick={() => set(s => ({ ...s, settings: { ...s.settings, hide: !h } }))}><I n="eye" /></button></div>
-      <div className="num">{h ? '$••••' : money(bal)}</div>
-      <p className="small" style={{ color: '#a9c9c1' }}>Test funds, not real money</p>
-      <span className="chip"><I n="alert" /> Demo: no blockchain connected yet</span>
+      <div className="between"><span className="small hl"><I n="shield" s={16} /> Available balance
+        <button className="eye" aria-label={h ? 'Show balance' : 'Hide balance'} onClick={() => set(s => ({ ...s, settings: { ...s.settings, hide: !h } }))}><I n="eye" s={18} /></button></span>
+        <button className="link light" onClick={() => go('activity')}>History ›</button></div>
+      <div className="between" style={{ marginTop: 6 }}><div className="num">{h ? '$••••' : money(bal)}</div><button className="pill" onClick={fund}>+ Add funds</button></div>
+      <span className="chip"><I n="alert" /> Demo: test funds, no blockchain yet</span>
     </div>
-    <div className="acts">
-      <button className="act p" onClick={() => go('send')}><span><I n="up" s={24} /></span>Send</button>
-      <button className="act" onClick={() => go('receive')}><span><I n="down" s={24} /></span>Receive</button>
-      <button className="act" onClick={() => go('request')}><span><I n="req" s={24} /></span>Request</button>
-      <button className="act" onClick={() => { set(s => chain.fund(s, 100)); say('Added $100.00 test funds') }}><span><I n="plus" s={24} /></span>Add funds</button>
-    </div>
-    <Start st={st} go={go} set={set} say={say} />
+    <button className="strip" onClick={() => go('privacy')}><I n="shield" s={20} /><span>Privacy check-up</span><b>{done} of {ck.length}</b><span aria-hidden="true">›</span></button>
+    {st.txs.length > 0 && <section className="wid slim">{st.txs.slice(0, 3).map(t => <TxRow key={t.id} t={t} onClick={() => setSel(t)} />)}</section>}
+    <section className="tiles">
+      {[['To Pay ID', 'up', 'send'], ['Request', 'req', 'request'], ['Receive', 'down', 'receive']].map(([l, i, k]) => <button key={k} onClick={() => go(k)}><span><I n={i} s={24} /></span>{l}</button>)}
+    </section>
+    {prompt && <section className="prompt"><div><b>{prompt[0]}</b><p className="muted small">{prompt[1]}</p></div><button className="pill dark" onClick={prompt[3]}>{prompt[2]}</button></section>}
+    <section className="wid"><h2 style={{ marginBottom: 12 }}>Services</h2><div className="grid4">{svcs.map(([l, i, f]) => <button key={l} onClick={f}><span><I n={i} s={24} /></span>{l}</button>)}</div></section>
+    <button className="promo" onClick={() => go('vault')}>
+      <div><b>{goal ? goal.name : 'Start a savings goal'}</b><p className="muted small">{goal ? `${money(goal.saved)} of ${money(goal.target)} saved` : 'Small savings today, big plans tomorrow.'}</p>
+        <div className="prog"><span style={{ width: goal ? Math.min(100, goal.saved / goal.target * 100) + '%' : '0%' }} /></div></div><span className="pill dark">{goal ? 'Open' : 'Start'}</span>
+    </button>
     <Quick st={st} setTo={setTo} go={go} />
     <Week txs={st.txs} />
-    <section><div className="between"><h2>Recent activity</h2>{st.txs.length > 0 && <button className="link" onClick={() => go('activity')}>See all</button>}</div>
-      {st.txs.length === 0 && <div className="empty center"><span className="ic big"><I n="list" /></span><p className="muted small">No activity yet. Add test funds to try a payment.</p></div>}
-      {st.txs.slice(0, 4).map(t => <TxRow key={t.id} t={t} onClick={() => setSel(t)} />)}</section>
     {sel && <Sheet t={sel} close={() => setSel(null)} />}
     <Nav on="home" go={go} />
   </>)
 }
 
+function Notifs({ st, set, go, lock }) {
+  useEffect(() => { set(chain.markSeen) }, [])
+  const list = notifList(st, lock)
+  return (<>
+    <div className="top"><Back go={go} /><h1>Notifications</h1></div>
+    <section>{list.map(n => <div className="row" key={n.id}><span className="ic"><I n="bell" s={18} /></span><div style={{ flex: 1 }}><b style={{ fontWeight: 500 }}>{n.title}</b><div className="muted small">{n.text}</div></div></div>)}</section>
+  </>)
+}
+
+function TopUp({ st, set, go, say, svc, setSvc }) {
+  const [net, setNet] = useState('MTN'), [num, setNum] = useState(''), [amt, setAmt] = useState(0), [plan, setPlan] = useState('')
+  const plans = [['500 MB', 300], ['1 GB', 500], ['2 GB', 900], ['5 GB', 1800]]
+  const usd = +(amt / chain.RATE).toFixed(2)
+  const err = amt > 0 && usd > st.balance ? 'Not enough balance' : ''
+  const ok = /^0[789]\d{9}$/.test(num) && amt > 0 && !err
+  const buy = () => { set(s => chain.bill(s, `${svc === 'airtime' ? 'Airtime' : 'Data ' + plan} · ${net} ${num.slice(-4)}`, usd)); say('Top-up successful (demo)'); go('home') }
+  return (<>
+    <div className="top"><Back go={go} /><h1>Airtime & Data</h1></div>
+    <div className="seg" role="tablist">{[['airtime', 'Airtime'], ['data', 'Data']].map(([k, l]) => <button key={k} role="tab" aria-selected={svc === k} className={svc === k ? 'on' : ''} onClick={() => { setSvc(k); setAmt(0); setPlan('') }}>{l}</button>)}</div>
+    <div className="seg small-seg" aria-label="Network">{['MTN', 'Airtel', 'Glo', '9mobile'].map(n => <button key={n} className={net === n ? 'on' : ''} onClick={() => setNet(n)}>{n}</button>)}</div>
+    <div className="field"><label htmlFor="ph" className="muted small">Phone number</label><input id="ph" className="in" inputMode="numeric" maxLength={11} value={num} onChange={e => setNum(e.target.value.replace(/\D/g, ''))} placeholder="08012345678" /></div>
+    <div className="opts">{(svc === 'airtime' ? [100, 200, 500, 1000].map(v => [`₦${v}`, v]) : plans.map(p => [`${p[0]} · ₦${p[1]}`, p[1], p[0]])).map(([l, v, pl]) => <button key={l} className={amt === v && (svc === 'airtime' || plan === pl) ? 'on' : ''} onClick={() => { setAmt(v); setPlan(pl || '') }}>{l}</button>)}</div>
+    <p className="muted small">{amt > 0 ? `You pay about ${money(usd)} (₦${amt.toLocaleString()})` : 'Choose an amount'}. Demo rate: ₦{chain.RATE.toLocaleString()} = $1. Nothing is really sent.</p>
+    {err && <p className="err">{err}</p>}
+    <button className="btn" disabled={!ok} onClick={buy} style={{ marginTop: 'auto' }}>Pay {amt > 0 ? money(usd) : ''}</button>
+  </>)
+}
+
+function Vault({ st, set, go, say }) {
+  const [name, setName] = useState(''), [target, setTarget] = useState('')
+  const t = parseFloat(target) || 0
+  const add = (g, n) => { if (n > st.balance) return say('Not enough balance'); set(s => chain.toVault(s, g.id, n)); say(`Saved ${money(n)} to ${g.name}`) }
+  return (<>
+    <h1>Vault</h1><p className="muted">Set money aside for something you want. Test funds only.</p>
+    {st.goals.length === 0 && <div className="empty center"><span className="ic big"><I n="vault" /></span><p className="muted small">No goals yet. Create your first one below.</p></div>}
+    {st.goals.map(g => (
+      <section className="wid" key={g.id}><div className="between"><h2>{g.name}</h2><b className="num amt">{money(g.saved)} <span className="muted small">/ {money(g.target)}</span></b></div>
+        <div className="prog" role="progressbar" aria-valuemin="0" aria-valuemax={g.target} aria-valuenow={g.saved}><span style={{ width: Math.min(100, g.saved / g.target * 100) + '%' }} /></div>
+        <div className="two" style={{ marginTop: 12, gridTemplateColumns: '1fr 1fr 1fr' }}><button className="btn sec" onClick={() => add(g, 10)}>+ $10</button><button className="btn sec" onClick={() => add(g, 25)}>+ $25</button>
+          <button className="btn sec" onClick={() => { set(s => chain.fromVault(s, g.id)); say('Moved back to your balance') }}>Withdraw</button></div></section>))}
+    <section className="wid"><h2 style={{ marginBottom: 10 }}>New goal</h2>
+      <div className="field"><label htmlFor="gn" className="muted small">What are you saving for?</label><input id="gn" className="in" value={name} maxLength={24} onChange={e => setName(e.target.value)} placeholder="Laptop" /></div>
+      <div className="field" style={{ marginTop: 10 }}><label htmlFor="gt" className="muted small">Target amount ($)</label><input id="gt" className="in" inputMode="decimal" value={target} onChange={e => setTarget(e.target.value.replace(/[^\d.]/g, ''))} placeholder="500" /></div>
+      <button className="btn" style={{ marginTop: 14 }} disabled={!name.trim() || !(t > 0)} onClick={() => { set(s => chain.newGoal(s, name.trim(), t)); setName(''); setTarget(''); say('Goal created') }}>Create goal</button></section>
+    <Nav on="vault" go={go} />
+  </>)
+}
+
+function Privacy({ st, set, go, lock, setPinMode }) {
+  const ck = checkup(st, lock), done = ck.filter(c => c.ok).length
+  const fix = f => f === 'pin' ? (setPinMode('set'), go('pin')) : f === 'pin2' ? go('settings') : set(s => ({ ...s, settings: { ...s.settings, [f]: true } }))
+  return (<>
+    <div className="top"><Back go={go} /><h1>Privacy check-up</h1></div>
+    <div className="card center"><span className="num" style={{ fontSize: 48 }}>{done} of {ck.length}</span><p className="muted small">protections on for this device</p>
+      <div className="prog" style={{ width: '100%' }}><span style={{ width: done / ck.length * 100 + '%' }} /></div></div>
+    <section>{ck.map(c => <div className="row" key={c.k}><span className={'ic ' + (c.ok ? '' : 'off')}><I n={c.ok ? 'check' : 'alert'} s={18} /></span><div style={{ flex: 1 }}>{c.k}</div>{!c.ok && <button className="pill dark" onClick={() => fix(c.fix)}>Fix</button>}</div>)}</section>
+    <p className="muted small">This check-up covers settings on this phone. It does not make payments private by itself. When the real network is connected, we will explain exactly what stays private.</p>
+  </>)
+}
+
 function Activity({ st, go }) {
   const [f, setF] = useState('all'), [sel, setSel] = useState(null)
-  const list = st.txs.filter(t => f === 'all' || (f === 'out') === (t.type === 'out'))
+  const list = st.txs.filter(t => f === 'all' || (f === 'out') === neg(t))
   const groups = list.reduce((m, t) => { const k = when(t.ts); (m[k] = m[k] || []).push(t); return m }, {})
   return (<>
     <h1>Activity</h1>

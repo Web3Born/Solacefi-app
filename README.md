@@ -57,3 +57,8 @@ uninstall the old SolaceFi app once, then install the new APK. Check Settings > 
 ## Getting the newest APK (easy way)
 After each push, open the repo on GitHub > Releases > "SolaceFi latest build". Tap `SolaceFi-debug.apk` to download and install it.
 The installed app is a frozen copy: it only changes when you install a newer APK. The lock screen shows the version at the bottom.
+
+## v0.7.0 features
+Home redesign (profile greeting, help and notification bell with badge, balance card with History and Add funds, privacy check-up strip,
+recent activity, quick actions, services grid), Notifications, Airtime & Data top-up (demo rate), Vault savings goals, Privacy check-up.
+All of it runs on local demo data: no real payments, no real telecom purchases, no real exchange rate.
