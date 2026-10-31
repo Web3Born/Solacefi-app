@@ -17,6 +17,7 @@ const short = a => a.slice(0, 8) + '…' + a.slice(-4)
 const when = t => { const d = Math.floor((Date.now() - t) / 864e5); return d < 1 ? 'Today' : d < 2 ? 'Yesterday' : new Date(t).toLocaleDateString() }
 const nm = c => c.includes('@') ? c.split('@')[0].replace(/^./, x => x.toUpperCase()) : 'Friend'
 const clean = v => v.toLowerCase().replace(/^@/, '').trim()
+const VERSION = '0.6.1'
 const press = (a, k) => k === '←' ? a.slice(0, -1) : k === '.' ? (a.includes('.') ? a : (a || '0') + '.') : /\.\d{2}$/.test(a) ? a : a === '0' ? k : a + k
 const Keys = ({ on }) => <div className="keys">{['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '←'].map(k => <button key={k} aria-label={k === '←' ? 'Delete' : k} onClick={() => on(k)}>{k}</button>)}</div>
 const Logo = () => <span className="logo"><img src="/logo-mark.png" alt="" /><span>Solace<b>Fi</b></span></span>
@@ -359,6 +360,7 @@ function LockScreen({ lock, setLock, open, reset, user }) {
       <p className="muted">{wait ? `Try again in ${wait}s` : 'Enter your 6-digit PIN'}</p></div>
     <PinPad value={pin} onKey={key} error={err} disabled={!!wait} />
     <button className="link" style={{ marginTop: 'auto' }} onClick={() => confirm('In demo mode there is no recovery. This clears all demo data on this device. Continue?') && reset()}>Forgot PIN?</button>
+    <p className="muted small center">SolaceFi v{VERSION}</p>
   </>)
 }
 function Pin({ go, lock, setLock, say, pinMode }) {
@@ -409,7 +411,7 @@ function Settings({ st, set, go, lock, setLock, setPinMode, reset: doReset }) {
       {lock && <div className="rowbtn" style={{ display: 'grid', gap: 8 }}><span>Lock after leaving the app</span><div className="seg small-seg">{[[0, 'Right away'], [60, '1 min'], [300, '5 min']].map(([v, l]) => <button key={v} className={lock.after === v ? 'on' : ''} onClick={() => after(v)}>{l}</button>)}</div></div>}
       <div className="off"><R k="Passkey" v="Coming soon" /><R k="Recovery method" v="Coming soon" /><R k="Face or fingerprint unlock" v="Coming soon" /></div></section>
     <section className="grp"><h2>Demo tools</h2>{tog('frozen', 'Simulate a paused account')}</section>
-    <section className="grp"><h2>About</h2><R k="Version" v="0.6.0 (demo)" /><R k="Network" v="None. Demo mode." /><R k="Secure storage" v={secure() ? 'Yes' : 'Basic mode'} />
+    <section className="grp"><h2>About</h2><R k="Version" v={VERSION + ' (demo)'} /><R k="Network" v="None. Demo mode." /><R k="Secure storage" v={secure() ? 'Yes' : 'Basic mode'} />
       <R k="Support" v={<a href="mailto:Solacefipay@gmail.com" style={{ color: 'var(--g)' }}>Email us</a>} /></section>
     <button className="btn sec" onClick={() => reset('Log out? In demo mode this clears the demo data on this device.')}>Log out</button>
     <button className="btn sec danger" onClick={() => reset('Delete your demo account and all demo data on this device?')}>Delete account</button>

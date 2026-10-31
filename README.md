@@ -53,3 +53,7 @@ iOS needs a Mac or a cloud Mac service (not set up yet).
 Debug APKs are now signed with a fixed key (`ci/debug.keystore`, a public debug key, never for store releases),
 so a new APK installs over the old one. APKs built before v0.5.2 used a different random key each run:
 uninstall the old SolaceFi app once, then install the new APK. Check Settings > About > Version to confirm the update.
+
+## Getting the newest APK (easy way)
+After each push, open the repo on GitHub > Releases > "SolaceFi latest build". Tap `SolaceFi-debug.apk` to download and install it.
+The installed app is a frozen copy: it only changes when you install a newer APK. The lock screen shows the version at the bottom.
