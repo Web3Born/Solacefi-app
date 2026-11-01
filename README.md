@@ -62,3 +62,8 @@ The installed app is a frozen copy: it only changes when you install a newer APK
 Home redesign (profile greeting, help and notification bell with badge, balance card with History and Add funds, privacy check-up strip,
 recent activity, quick actions, services grid), Notifications, Airtime & Data top-up (demo rate), Vault savings goals, Privacy check-up.
 All of it runs on local demo data: no real payments, no real telecom purchases, no real exchange rate.
+
+## v0.8.0: bridge between naira and USDCx (demo)
+Home > Add money / Cash out. Add money: naira, bank transfer, converted to USDC, moved to private USDCx. Cash out: USDCx leaves private mode
+(a public step), converts to naira, goes to a bank account. Everything is simulated. Going live needs a licensed ramp partner and the issuer bridge;
+SolaceFi should not hold customer funds or run the bridge itself.

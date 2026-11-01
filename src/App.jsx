@@ -9,7 +9,7 @@ const P = {
   home: 'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10', qr: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h3v3h-3zM20 14v6h-6',
   gear: 'M12 8a4 4 0 100 8 4 4 0 000-8zM4 12h2M18 12h2M12 4v2M12 18v2', check: 'M5 12l5 5L20 7',
   eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 100 6 3 3 0 000-6z',
-  lock: 'M5 11h14v10H5zM8 11V8a4 4 0 018 0v3', del: 'M21 5H9l-6 7 6 7h12zM15 9l-4 6M11 9l4 6', bell: 'M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0', help: 'M12 3a9 9 0 100 18 9 9 0 000-18zM9.5 9a2.5 2.5 0 115 0c0 1.5-2.5 2-2.5 3.5M12 17h.01', phone: 'M7 2h10v20H7zM11 18h2', vault: 'M4 5h16v14H4zM12 9a3 3 0 100 6 3 3 0 000-6zM4 9h2M4 15h2', shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4', more: 'M6 12h.01M12 12h.01M18 12h.01', wifi: 'M2 9a15 15 0 0120 0M5 13a10 10 0 0114 0M9 17a4 4 0 016 0M12 20h.01', tv: 'M3 7h18v12H3zM8 3l4 4 4-4', card2: 'M3 6h18v12H3zM3 10h18', req: 'M3 6h18v12H3zM3 7l9 6 9-6', list: 'M4 6h16M4 12h16M4 18h10', alert: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v6M12 16.5h.01'
+  lock: 'M5 11h14v10H5zM8 11V8a4 4 0 018 0v3', del: 'M21 5H9l-6 7 6 7h12zM15 9l-4 6M11 9l4 6', bell: 'M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0', help: 'M12 3a9 9 0 100 18 9 9 0 000-18zM9.5 9a2.5 2.5 0 115 0c0 1.5-2.5 2-2.5 3.5M12 17h.01', phone: 'M7 2h10v20H7zM11 18h2', vault: 'M4 5h16v14H4zM12 9a3 3 0 100 6 3 3 0 000-6zM4 9h2M4 15h2', shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4', more: 'M6 12h.01M12 12h.01M18 12h.01', bank: 'M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18', wifi: 'M2 9a15 15 0 0120 0M5 13a10 10 0 0114 0M9 17a4 4 0 016 0M12 20h.01', tv: 'M3 7h18v12H3zM8 3l4 4 4-4', card2: 'M3 6h18v12H3zM3 10h18', req: 'M3 6h18v12H3zM3 7l9 6 9-6', list: 'M4 6h16M4 12h16M4 18h10', alert: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v6M12 16.5h.01'
 }
 const I = ({ n, s = 22 }) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={P[n]} /></svg>
 const money = n => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -17,7 +17,7 @@ const short = a => a.slice(0, 8) + '…' + a.slice(-4)
 const when = t => { const d = Math.floor((Date.now() - t) / 864e5); return d < 1 ? 'Today' : d < 2 ? 'Yesterday' : new Date(t).toLocaleDateString() }
 const nm = c => c.includes('@') ? c.split('@')[0].replace(/^./, x => x.toUpperCase()) : 'Friend'
 const clean = v => v.toLowerCase().replace(/^@/, '').trim()
-const VERSION = '0.7.0'
+const VERSION = '0.8.0'
 const press = (a, k) => k === '←' ? a.slice(0, -1) : k === '.' ? (a.includes('.') ? a : (a || '0') + '.') : /\.\d{2}$/.test(a) ? a : a === '0' ? k : a + k
 const Keys = ({ on }) => <div className="keys">{['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '←'].map(k => <button key={k} aria-label={k === '←' ? 'Delete' : k} onClick={() => on(k)}>{k}</button>)}</div>
 const Logo = () => <span className="logo"><img src="/logo-mark.png" alt="" /><span>Solace<b>Fi</b></span></span>
@@ -25,10 +25,10 @@ const Back = ({ go, to = 'home' }) => <button className="back" aria-label="Back"
 const vibe = () => { try { navigator.vibrate?.(15) } catch {} }
 const hue = x => [...x].reduce((a, c) => a + c.charCodeAt(0), 0) * 37 % 360
 const Av = ({ name, size = 40 }) => <span className="av" style={{ width: size, height: size, background: `hsl(${hue(name)} 70% 62%)`, fontSize: size * .42 }}>{name[0].toUpperCase()}</span>
-const NEG = ['out', 'vault', 'bill']
+const NEG = ['out', 'vault', 'bill', 'offramp']
 const neg = t => NEG.includes(t.type)
-const ICON = { out: 'up', in: 'down', fund: 'plus', bill: 'phone', vault: 'vault', unvault: 'vault' }
-const kind = t => ({ out: 'Sent', in: 'Received', fund: 'Test funds', bill: 'Top-up', vault: 'Saved to Vault', unvault: 'From Vault' }[t.type])
+const ICON = { out: 'up', in: 'down', fund: 'plus', bill: 'phone', vault: 'vault', unvault: 'vault', onramp: 'bank', offramp: 'bank' }
+const kind = t => ({ out: 'Sent', in: 'Received', fund: 'Test funds', bill: 'Top-up', vault: 'Saved to Vault', unvault: 'From Vault', onramp: 'Added from naira', offramp: 'Cashed out to bank' }[t.type])
 function useCount(v) {
   const [x, setX] = useState(v)
   useEffect(() => {
@@ -115,6 +115,7 @@ export default function App() {
   const [last, setLast] = useState(null)
   const [note, setNote] = useState('')
   const [svc, setSvc] = useState('airtime')
+  const [cv, setCv] = useState('add')
   const [toast, setToast] = useState('')
   const [lock, setLockS] = useState(loadLock)
   const [locked, setLocked] = useState(() => !!loadLock() && !!chain.load().user)
@@ -138,8 +139,8 @@ export default function App() {
       setNote((q.get('note') || '').slice(0, 60)); setScr('send')
     }
   }, [])
-  const p = { st, set, go: setScr, to, setTo, amt, setAmt, last, setLast, say, note, setNote, lock, setLock, pinMode, setPinMode, reset, svc, setSvc }
-  const S = { welcome: Welcome, payid: PayId, ready: Ready, home: Home, send: Send, review: Review, done: Done, receive: Receive, request: Request, pin: Pin, notifs: Notifs, topup: TopUp, vault: Vault, privacy: Privacy, activity: Activity, settings: Settings, blocked: Blocked }[scr]
+  const p = { st, set, go: setScr, to, setTo, amt, setAmt, last, setLast, say, note, setNote, lock, setLock, pinMode, setPinMode, reset, svc, setSvc, cv, setCv }
+  const S = { welcome: Welcome, payid: PayId, ready: Ready, home: Home, send: Send, review: Review, done: Done, receive: Receive, request: Request, pin: Pin, notifs: Notifs, topup: TopUp, convert: Convert, vault: Vault, privacy: Privacy, activity: Activity, settings: Settings, blocked: Blocked }[scr]
   if (locked && lock) return <main className="app"><div className="scr"><LockScreen lock={lock} setLock={setLock} open={() => setLocked(false)} reset={reset} user={st.user} /></div></main>
   return <main className="app"><div className="scr" key={scr}><S {...p} /></div><div className={'toast' + (toast ? ' show' : '')} role="status" aria-live="polite">{toast}</div></main>
 }
@@ -222,16 +223,16 @@ const checkup = (st, lock) => [
   { k: 'Security alerts are on', ok: st.settings.sec, fix: 'sec' },
   { k: 'Auto-lock is 1 minute or less', ok: !!lock && lock.after <= 60, fix: 'pin2' }
 ]
-function Home({ st, set, go, setTo, say, lock, setPinMode, setSvc }) {
+function Home({ st, set, go, setTo, say, lock, setPinMode, setSvc, setCv }) {
   const h = st.settings.hide, bal = useCount(st.balance)
   const [sel, setSel] = useState(null)
   const unread = notifList(st, lock).filter(n => n.ts > st.seen).length
   const ck = checkup(st, lock), done = ck.filter(c => c.ok).length
   const fund = () => { set(s => chain.fund(s, 100)); say('Added $100.00 test funds') }
   const prompt = !lock ? ['Secure your app with a PIN', 'Takes about 20 seconds', 'Set up', () => { setPinMode('set'); go('pin') }]
-    : st.txs.length === 0 ? ['Add test funds to try a payment', 'Free demo money', 'Add', fund] : null
+    : st.txs.length === 0 ? ['Add money to try a payment', 'Naira to USDCx, demo only', 'Add', () => { setCv('add'); go('convert') }] : null
   const svcs = [['Airtime', 'phone', () => { setSvc('airtime'); go('topup') }], ['Data', 'wifi', () => { setSvc('data'); go('topup') }], ['Vault', 'vault', () => go('vault')], ['Privacy', 'shield', () => go('privacy')],
-    ['Bills', 'list', () => say('Bills are coming soon')], ['TV', 'tv', () => say('TV is coming soon')], ['Cards', 'card2', () => say('Cards are coming soon')], ['More', 'more', () => say('More services are on the way')]]
+    ['Request', 'req', () => go('request')], ['Receive', 'down', () => go('receive')], ['Cards', 'card2', () => say('Cards are coming soon')], ['More', 'more', () => say('More services are on the way')]]
   const goal = st.goals[0]
   return (<>
     <div className="between">
@@ -245,13 +246,13 @@ function Home({ st, set, go, setTo, say, lock, setPinMode, setSvc }) {
       <div className="between"><span className="small hl"><I n="shield" s={16} /> Available balance
         <button className="eye" aria-label={h ? 'Show balance' : 'Hide balance'} onClick={() => set(s => ({ ...s, settings: { ...s.settings, hide: !h } }))}><I n="eye" s={18} /></button></span>
         <button className="link light" onClick={() => go('activity')}>History ›</button></div>
-      <div className="between" style={{ marginTop: 6 }}><div className="num">{h ? '$••••' : money(bal)}</div><button className="pill" onClick={fund}>+ Add funds</button></div>
+      <div className="between" style={{ marginTop: 6 }}><div className="num">{h ? '$••••' : money(bal)}</div><button className="pill" onClick={() => { setCv('add'); go('convert') }}>+ Add money</button></div>
       <span className="chip"><I n="alert" /> Demo: test funds, no blockchain yet</span>
     </div>
     <button className="strip" onClick={() => go('privacy')}><I n="shield" s={20} /><span>Privacy check-up</span><b>{done} of {ck.length}</b><span aria-hidden="true">›</span></button>
     {st.txs.length > 0 && <section className="wid slim">{st.txs.slice(0, 3).map(t => <TxRow key={t.id} t={t} onClick={() => setSel(t)} />)}</section>}
     <section className="tiles">
-      {[['To Pay ID', 'up', 'send'], ['Request', 'req', 'request'], ['Receive', 'down', 'receive']].map(([l, i, k]) => <button key={k} onClick={() => go(k)}><span><I n={i} s={24} /></span>{l}</button>)}
+      {[['To Pay ID', 'up', () => go('send')], ['Add money', 'plus', () => { setCv('add'); go('convert') }], ['Cash out', 'bank', () => { setCv('out'); go('convert') }]].map(([l, i, f]) => <button key={l} onClick={f}><span><I n={i} s={24} /></span>{l}</button>)}
     </section>
     {prompt && <section className="prompt"><div><b>{prompt[0]}</b><p className="muted small">{prompt[1]}</p></div><button className="pill dark" onClick={prompt[3]}>{prompt[2]}</button></section>}
     <section className="wid"><h2 style={{ marginBottom: 12 }}>Services</h2><div className="grid4">{svcs.map(([l, i, f]) => <button key={l} onClick={f}><span><I n={i} s={24} /></span>{l}</button>)}</div></section>
@@ -263,6 +264,51 @@ function Home({ st, set, go, setTo, say, lock, setPinMode, setSvc }) {
     <Week txs={st.txs} />
     {sel && <Sheet t={sel} close={() => setSel(null)} />}
     <Nav on="home" go={go} />
+  </>)
+}
+
+function Convert({ st, set, go, say, cv, setCv }) {
+  const [amt, setAmt] = useState(''), [bank, setBank] = useState('GTBank'), [acct, setAcct] = useState(''), [phase, setPhase] = useState('form'), [step, setStep] = useState(0)
+  const add = cv === 'add', n = parseFloat(amt) || 0
+  const usd = add ? +(n / chain.RATE).toFixed(2) : n, ngn = add ? n : Math.round(n * chain.RATE)
+  const ok = add ? n >= 1000 : n > 0 && n <= st.balance && /^\d{10}$/.test(acct)
+  const stages = add ? ['Bank transfer received', 'Converted to USDC', 'Moved to private USDCx'] : ['Moved out of private mode (public step)', 'Converted to naira', 'Sent to your bank']
+  useEffect(() => {
+    if (phase !== 'run') return
+    let i = 0
+    const t = setInterval(() => { i++; setStep(i); if (i === 3) { clearInterval(t); set(s => add ? chain.onramp(s, ngn, usd) : chain.offramp(s, usd, `${bank} ••${acct.slice(-4)}`)); setPhase('done') } }, 1100)
+    return () => clearInterval(t)
+  }, [phase])
+  if (phase === 'done') return (<>
+    <div className="center" style={{ marginTop: 40 }}><span className="okc pop"><I n="check" s={28} /></span><h1>{add ? 'Money added' : 'Cash out on its way'}</h1>
+      <p className="muted">{add ? `${money(usd)} USDCx added to your balance` : `₦${ngn.toLocaleString()} to ${bank} ••${acct.slice(-4)}`}</p><p className="muted small">Demo only. No real money moved.</p></div>
+    <button className="btn" style={{ marginTop: 'auto' }} onClick={() => go('home')}>Done</button>
+  </>)
+  if (phase === 'run') return (<>
+    <h1>{add ? 'Adding money' : 'Cashing out'}</h1><p className="muted">{add ? `₦${ngn.toLocaleString()} to about ${money(usd)} USDCx` : `${money(usd)} USDCx to about ₦${ngn.toLocaleString()}`}</p>
+    <section>{stages.map((l, i) => <div key={l} className={'stage ' + (step > i ? 'done' : step === i ? 'now' : '')}><span className="dotc">{step > i && <I n="check" s={14} />}</span>{l}</div>)}</section>
+  </>)
+  if (phase === 'pay') return (<>
+    <div className="top"><Back go={() => setPhase('form')} /><h1>Pay by bank transfer</h1></div>
+    <div className="card"><p className="muted small">Send exactly</p><div className="num" style={{ fontSize: 40 }}>₦{n.toLocaleString()}</div>
+      <R k="Bank" v="Demo Bank (partner)" /><R k="Account" v="0123456789" mono /><R k="Reference" v="SOLACE-DEMO" mono /></div>
+    <p className="muted small">In the live app, a licensed partner gives you real account details here. These are placeholders.</p>
+    <button className="btn" style={{ marginTop: 'auto' }} onClick={() => { setStep(0); setPhase('run') }}>I have sent the money</button>
+  </>)
+  return (<>
+    <div className="top"><Back go={go} /><h1>Naira ⇄ USDCx</h1></div>
+    <div className="seg" role="tablist">{[['add', 'Add money'], ['out', 'Cash out']].map(([k, l]) => <button key={k} role="tab" aria-selected={cv === k} className={cv === k ? 'on' : ''} onClick={() => { setCv(k); setAmt('') }}>{l}</button>)}</div>
+    <div className="field"><label htmlFor="ca" className="muted small">{add ? 'Amount in naira (₦)' : 'Amount to cash out ($ USDCx)'}</label>
+      <input id="ca" className="in" inputMode="decimal" value={amt} onChange={e => setAmt(e.target.value.replace(/[^\d.]/g, ''))} placeholder={add ? '5000' : '25'} /></div>
+    <div className="seg small-seg">{(add ? [5000, 10000, 50000] : [10, 25, 50]).map(v => <button key={v} onClick={() => setAmt(String(v))}>{add ? '₦' + v.toLocaleString() : '$' + v}</button>)}{!add && <button onClick={() => setAmt(String(st.balance))}>Max</button>}</div>
+    {!add && <><div className="seg small-seg" aria-label="Bank" style={{ flexWrap: 'wrap' }}>{['GTBank', 'Access', 'Zenith', 'UBA', 'First Bank'].map(b => <button key={b} className={bank === b ? 'on' : ''} onClick={() => setBank(b)}>{b}</button>)}</div>
+      <div className="field"><label htmlFor="ac" className="muted small">Account number</label><input id="ac" className="in" inputMode="numeric" maxLength={10} value={acct} onChange={e => setAcct(e.target.value.replace(/\D/g, ''))} placeholder="0123456789" /></div></>}
+    <p className="muted small">{n > 0 ? (add ? `You get about ${money(usd)} USDCx.` : `You receive about ₦${ngn.toLocaleString()}.`) : 'Enter an amount.'} Demo rate: ₦{chain.RATE.toLocaleString()} = $1. Fees and the real rate come from the partner.</p>
+    {add && n > 0 && n < 1000 && <p className="err">Minimum is ₦1,000 in this demo</p>}
+    {!add && n > st.balance && <p className="err">Amount is more than your balance</p>}
+    <div className="notice">{add ? 'A licensed partner handles the bank transfer and conversion, and will ask you to verify your ID before your first deposit. Skipped in this demo.' : 'Cashing out is a public step on the network, so this amount is not private. Your partner will also check your ID before the first cash-out. Skipped in this demo.'}</div>
+    <button className="btn" disabled={!ok} style={{ marginTop: 'auto' }} onClick={() => add ? setPhase('pay') : (setStep(0), setPhase('run'))}>{add ? 'Continue' : 'Cash out'}</button>
+    {add && <button className="link" onClick={() => { set(s => chain.fund(s, 100)); say('Added $100.00 test funds') }}>Just want quick demo money? Get $100 test funds</button>}
   </>)
 }
 

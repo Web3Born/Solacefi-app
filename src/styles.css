@@ -124,3 +124,9 @@ details{border-top:1px solid var(--line);padding:12px 0}summary{cursor:pointer}d
 .promo>div{flex:1}.promo .prog{margin:10px 0 0}
 .opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}.opts button{height:48px;border-radius:12px;border:1px solid #2a4651;background:var(--panel);font-size:15px}.opts button.on{border-color:var(--g);background:#12332e}
 .ic.off{background:#2a2112;color:var(--gold)}
+
+.stage{display:flex;gap:14px;align-items:center;padding:16px 0;border-top:1px solid var(--line);color:var(--muted)}
+.stage .dotc{width:28px;height:28px;border-radius:50%;border:2px solid #3a5a64;display:grid;place-items:center;flex:none}
+.stage.done{color:var(--text)}.stage.done .dotc{background:var(--g);border-color:var(--g);color:#04140D}
+.stage.now{color:var(--text)}.stage.now .dotc{border-color:var(--g);border-top-color:transparent;animation:s 1s linear infinite}
+.notice{padding:14px 16px;border-radius:14px;background:rgba(214,181,109,.08);border-left:3px solid var(--gold);color:var(--muted);font-size:14px}

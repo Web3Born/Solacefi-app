@@ -28,3 +28,5 @@ export const newGoal = (s, name, target) => ({ ...s, goals: [...s.goals, { id: r
 export const toVault = (s, id, n) => { const g = s.goals.find(x => x.id === id); return g ? { ...s, balance: r2(s.balance - n), goals: s.goals.map(x => x.id === id ? { ...x, saved: r2(x.saved + n) } : x), txs: [tx('vault', 'To Vault: ' + g.name, n), ...s.txs] } : s }
 export const fromVault = (s, id) => { const g = s.goals.find(x => x.id === id); return g ? { ...s, balance: r2(s.balance + g.saved), goals: s.goals.filter(x => x.id !== id), txs: g.saved > 0 ? [tx('unvault', 'From Vault: ' + g.name, g.saved), ...s.txs] : s.txs } : s }
 export const markSeen = s => ({ ...s, seen: Date.now() })
+export const onramp = (s, ngn, usd) => ({ ...s, balance: r2(s.balance + usd), txs: [tx('onramp', `Added ₦${ngn.toLocaleString()} (demo)`, usd), ...s.txs] })
+export const offramp = (s, usd, bank) => apply(s, tx('offramp', 'Cash out to ' + bank, usd))
