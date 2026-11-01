@@ -13,16 +13,16 @@ export const available = (s, id) => !s.dir[id]
 export const lookup = (s, id) => s.dir[id] || null
 export const claim = (s, id) => { const a = addr(); return { ...s, user: { ...s.user, payId: id, address: a }, dir: { ...s.dir, [id]: { name: s.user.name, addr: a } } } }
 const tx = (type, label, amount, to, note = '') => ({ id: Math.random().toString(36).slice(2, 10), ts: Date.now(), type, label, amount, to, note })
-export const fund = (s, n) => ({ ...s, balance: +(s.balance + n).toFixed(2), txs: [tx('fund', 'Test funds added', n), ...s.txs] })
+export const fund = (s, n) => ({ ...s, balance: +(s.balance + n).toFixed(6), txs: [tx('fund', 'Test funds added', n), ...s.txs] })
 export const send = async (s, to, n, note = '') => {
   await new Promise(r => setTimeout(r, 900))
   if (!s.dir[to]) throw new Error('No account found with that Pay ID')
   if (n > s.balance) throw new Error('Not enough balance')
   return tx('out', 'To @' + to, n, to, note)
 }
-export const apply = (s, t) => ({ ...s, balance: +(s.balance - t.amount).toFixed(2), txs: [t, ...s.txs] })
+export const apply = (s, t) => ({ ...s, balance: +(s.balance - t.amount).toFixed(6), txs: [t, ...s.txs] })
 const rid = () => Math.random().toString(36).slice(2, 8)
-const r2 = n => +n.toFixed(2)
+const r2 = n => +n.toFixed(6)
 export const bill = (s, label, n) => apply(s, tx('bill', label, n))
 export const newGoal = (s, name, target) => ({ ...s, goals: [...s.goals, { id: rid(), name, target, saved: 0 }] })
 export const toVault = (s, id, n) => { const g = s.goals.find(x => x.id === id); return g ? { ...s, balance: r2(s.balance - n), goals: s.goals.map(x => x.id === id ? { ...x, saved: r2(x.saved + n) } : x), txs: [tx('vault', 'To Vault: ' + g.name, n), ...s.txs] } : s }

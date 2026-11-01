@@ -70,3 +70,8 @@ SolaceFi should not hold customer funds or run the bridge itself.
 
 ## v0.8.1
 Smaller Add money button, and a searchable cash-out bank picker with 35 Nigerian banks and fintechs (OPay, Moniepoint, PalmPay, Kuda and more). The list is a sample; the live list will come from the licensed partner.
+
+## v0.9.0
+Dollar / naira display (flip switch on the balance card and in Settings; amounts you type follow the chosen currency; demo rate).
+Hold-to-reveal balance (hide the balance, then press and hold it to peek). Animated private-send sequence
+(encrypt, prove, verify, settle) that explains what the live network will do. Glass and aurora look with a shield orb that turns gold when no PIN is set.

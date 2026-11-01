@@ -139,3 +139,20 @@ details{border-top:1px solid var(--line);padding:12px 0}summary{cursor:pointer}d
 .bk{display:flex;align-items:center;gap:12px;width:100%;padding:10px 6px;border:0;background:none;color:var(--text);text-align:left;border-radius:12px;font-size:16px}
 .bk span{flex:1}.bk.on{background:#12332e;color:var(--g)}.bk:active{background:#16303a}
 .bk .av{flex:none}.bk>span:not(.av){flex:1}
+
+body{background:radial-gradient(60% 40% at 95% 0%,rgba(18,185,129,.16),transparent 70%),radial-gradient(50% 40% at 0% 100%,rgba(214,181,109,.08),transparent 70%),var(--bg);background-attachment:fixed}
+.card.bal{background:radial-gradient(120% 90% at 0% 0%,rgba(43,229,154,.28),transparent 58%),radial-gradient(90% 80% at 100% 100%,rgba(214,181,109,.14),transparent 58%),linear-gradient(160deg,#0f3a35,#0a1b24 70%);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 18px 50px rgba(18,185,129,.12),inset 0 1px 0 rgba(255,255,255,.08)}
+.orb{position:absolute!important;right:-26px;top:-26px;width:170px;height:170px;opacity:.5;pointer-events:none}
+.orb circle{fill:none;transform-origin:60px 60px}.orb .r1{stroke:#2BE59A;stroke-width:1.2;stroke-dasharray:6 10;animation:spin 18s linear infinite}.orb .r2{stroke:#2BE59A;stroke-width:1;stroke-dasharray:2 14;animation:spin 28s linear infinite reverse}
+.card.bal.nolock .orb .r1,.card.bal.nolock .orb .r2{stroke:var(--gold)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.balbox{display:grid;gap:2px;min-width:0;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation;cursor:pointer}
+.num.flip{animation:flip .5s cubic-bezier(.2,.8,.2,1)}@keyframes flip{from{transform:rotateX(80deg);opacity:0}}
+.num.veil{filter:blur(11px);transition:filter .25s}.balbox .alt{color:#a9c9c1}
+.cur{display:flex;background:rgba(0,0,0,.28);border-radius:99px;padding:3px}.cur button{width:36px;height:30px;border:0;border-radius:99px;background:none;color:#a9c9c1;font:600 15px Outfit,sans-serif}.cur button.on{background:var(--g);color:#04140D}
+.orbwrap{display:flex;align-items:center;justify-content:center;height:100px}
+.core{width:60px;height:60px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#d7fff0,#2BE59A 42%,#0B7F63);box-shadow:0 0 46px rgba(43,229,154,.65);animation:corep 1.6s ease-in-out infinite;flex:none}
+@keyframes corep{50%{transform:scale(1.12);box-shadow:0 0 70px rgba(43,229,154,.85)}}
+.beam{display:flex;gap:7px;width:64px;justify-content:center}.beam i{width:7px;height:7px;border-radius:50%;background:var(--g);opacity:.15;animation:flow 1.2s infinite}.beam i:nth-child(2){animation-delay:.2s}.beam i:nth-child(3){animation-delay:.4s}
+@keyframes flow{40%{opacity:1;transform:scale(1.4)}}
+.balbox .num{white-space:nowrap}

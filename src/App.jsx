@@ -13,12 +13,18 @@ const P = {
   lock: 'M5 11h14v10H5zM8 11V8a4 4 0 018 0v3', del: 'M21 5H9l-6 7 6 7h12zM15 9l-4 6M11 9l4 6', bell: 'M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0', help: 'M12 3a9 9 0 100 18 9 9 0 000-18zM9.5 9a2.5 2.5 0 115 0c0 1.5-2.5 2-2.5 3.5M12 17h.01', phone: 'M7 2h10v20H7zM11 18h2', vault: 'M4 5h16v14H4zM12 9a3 3 0 100 6 3 3 0 000-6zM4 9h2M4 15h2', shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4', more: 'M6 12h.01M12 12h.01M18 12h.01', bank: 'M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18', wifi: 'M2 9a15 15 0 0120 0M5 13a10 10 0 0114 0M9 17a4 4 0 016 0M12 20h.01', tv: 'M3 7h18v12H3zM8 3l4 4 4-4', card2: 'M3 6h18v12H3zM3 10h18', req: 'M3 6h18v12H3zM3 7l9 6 9-6', list: 'M4 6h16M4 12h16M4 18h10', alert: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v6M12 16.5h.01'
 }
 const I = ({ n, s = 22 }) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={P[n]} /></svg>
-const money = n => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+let CUR = 'USD'
+const FX = chain.RATE
+const money = n => CUR === 'NGN' ? '₦' + Math.round(n * FX).toLocaleString('en-NG') : '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const alt = n => CUR === 'NGN' ? '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '₦' + Math.round(n * FX).toLocaleString('en-NG')
+const sym = () => CUR === 'NGN' ? '₦' : '$'
+const toUSD = a => +(CUR === 'NGN' ? a / FX : a).toFixed(6)
+const fromUSD = u => CUR === 'NGN' ? Math.round(u * FX) : u
 const short = a => a.slice(0, 8) + '…' + a.slice(-4)
 const when = t => { const d = Math.floor((Date.now() - t) / 864e5); return d < 1 ? 'Today' : d < 2 ? 'Yesterday' : new Date(t).toLocaleDateString() }
 const nm = c => c.includes('@') ? c.split('@')[0].replace(/^./, x => x.toUpperCase()) : 'Friend'
 const clean = v => v.toLowerCase().replace(/^@/, '').trim()
-const VERSION = '0.8.1'
+const VERSION = '0.9.0'
 const press = (a, k) => k === '←' ? a.slice(0, -1) : k === '.' ? (a.includes('.') ? a : (a || '0') + '.') : /\.\d{2}$/.test(a) ? a : a === '0' ? k : a + k
 const Keys = ({ on }) => <div className="keys">{['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '←'].map(k => <button key={k} aria-label={k === '←' ? 'Delete' : k} onClick={() => on(k)}>{k}</button>)}</div>
 const Logo = () => <span className="logo"><img src="/logo-mark.png" alt="" /><span>Solace<b>Fi</b></span></span>
@@ -89,7 +95,7 @@ function Week({ txs }) {
 }
 function Start({ st, go, set, say }) {
   const t = st.txs
-  const items = [['Add test funds', t.some(x => x.type === 'fund'), () => { set(x => chain.fund(x, 100)); say('Added $100.00 test funds') }], ['Send your first payment', t.some(x => x.type === 'out'), () => go('send')], ['Share your Pay ID', !!st.settings.shared, () => go('receive')]]
+  const items = [['Add test funds', t.some(x => x.type === 'fund'), () => { set(x => chain.fund(x, 100)); say(`Added ${money(100)} test funds`) }], ['Send your first payment', t.some(x => x.type === 'out'), () => go('send')], ['Share your Pay ID', !!st.settings.shared, () => go('receive')]]
   const n = items.filter(i => i[1]).length
   if (n === 3) return null
   return (
@@ -110,6 +116,7 @@ const R = ({ k, v, mono }) => <div className="row between"><span className="mute
 
 export default function App() {
   const [st, setSt] = useState(chain.load)
+  CUR = st.settings.cur || 'USD'
   const [scr, setScr] = useState(() => chain.load().user?.payId ? 'home' : 'welcome')
   const [to, setTo] = useState('')
   const [amt, setAmt] = useState('')
@@ -136,12 +143,12 @@ export default function App() {
   useEffect(() => {
     const q = new URLSearchParams(location.search)
     if (q.get('pay') && st.user?.payId) {
-      setTo('@' + clean(q.get('pay'))); const a = q.get('amt'); if (a && /^\d+(\.\d{1,2})?$/.test(a)) setAmt(a)
+      setTo('@' + clean(q.get('pay'))); const a = q.get('amt'); if (a && /^\d+(\.\d{1,2})?$/.test(a)) setAmt(String(fromUSD(+a)))
       setNote((q.get('note') || '').slice(0, 60)); setScr('send')
     }
   }, [])
   const p = { st, set, go: setScr, to, setTo, amt, setAmt, last, setLast, say, note, setNote, lock, setLock, pinMode, setPinMode, reset, svc, setSvc, cv, setCv }
-  const S = { welcome: Welcome, payid: PayId, ready: Ready, home: Home, send: Send, review: Review, done: Done, receive: Receive, request: Request, pin: Pin, notifs: Notifs, topup: TopUp, convert: Convert, vault: Vault, privacy: Privacy, activity: Activity, settings: Settings, blocked: Blocked }[scr]
+  const S = { welcome: Welcome, payid: PayId, ready: Ready, home: Home, send: Send, review: Review, done: Done, receive: Receive, request: Request, pin: Pin, notifs: Notifs, topup: TopUp, convert: Convert, sending: Sending, vault: Vault, privacy: Privacy, activity: Activity, settings: Settings, blocked: Blocked }[scr]
   if (locked && lock) return <main className="app"><div className="scr"><LockScreen lock={lock} setLock={setLock} open={() => setLocked(false)} reset={reset} user={st.user} /></div></main>
   return <main className="app"><div className="scr" key={scr}><S {...p} /></div><div className={'toast' + (toast ? ' show' : '')} role="status" aria-live="polite">{toast}</div></main>
 }
@@ -226,10 +233,12 @@ const checkup = (st, lock) => [
 ]
 function Home({ st, set, go, setTo, say, lock, setPinMode, setSvc, setCv }) {
   const h = st.settings.hide, bal = useCount(st.balance)
-  const [sel, setSel] = useState(null)
+  const [sel, setSel] = useState(null), [peek, setPeek] = useState(false)
+  const veiled = h && !peek
+  const shown = veiled ? sym() + '8,888.88' : money(bal)
   const unread = notifList(st, lock).filter(n => n.ts > st.seen).length
   const ck = checkup(st, lock), done = ck.filter(c => c.ok).length
-  const fund = () => { set(s => chain.fund(s, 100)); say('Added $100.00 test funds') }
+  const fund = () => { set(s => chain.fund(s, 100)); say(`Added ${money(100)} test funds`) }
   const prompt = !lock ? ['Secure your app with a PIN', 'Takes about 20 seconds', 'Set up', () => { setPinMode('set'); go('pin') }]
     : st.txs.length === 0 ? ['Add money to try a payment', 'Naira to USDCx, demo only', 'Add', () => { setCv('add'); go('convert') }] : null
   const svcs = [['Airtime', 'phone', () => { setSvc('airtime'); go('topup') }], ['Data', 'wifi', () => { setSvc('data'); go('topup') }], ['Vault', 'vault', () => go('vault')], ['Privacy', 'shield', () => go('privacy')],
@@ -243,12 +252,19 @@ function Home({ st, set, go, setTo, say, lock, setPinMode, setSvc, setCv }) {
         <button className="ib" aria-label={'Notifications' + (unread ? `, ${unread} new` : '')} onClick={() => go('notifs')}><I n="bell" />{unread > 0 && <b className="badge">{unread}</b>}</button>
       </div>
     </div>
-    <div className="card bal">
+    <div className={'card bal' + (lock ? '' : ' nolock')}>
+      <svg className="orb" viewBox="0 0 120 120" aria-hidden="true"><defs><radialGradient id="og"><stop offset="0" stopColor="#d7fff0" /><stop offset="1" stopColor="#2BE59A" stopOpacity="0" /></radialGradient></defs>
+        <circle cx="60" cy="60" r="24" fill="url(#og)" /><circle className="r1" cx="60" cy="60" r="38" /><circle className="r2" cx="60" cy="60" r="52" /></svg>
       <div className="between"><span className="small hl"><I n="shield" s={16} /> Available balance
-        <button className="eye" aria-label={h ? 'Show balance' : 'Hide balance'} onClick={() => set(s => ({ ...s, settings: { ...s.settings, hide: !h } }))}><I n="eye" s={18} /></button></span>
+        <button className="eye" aria-label={h ? 'Always show balance' : 'Hide balance'} onClick={() => set(s => ({ ...s, settings: { ...s.settings, hide: !h } }))}><I n="eye" s={18} /></button></span>
         <button className="link light" onClick={() => go('activity')}>History ›</button></div>
-      <div className="between" style={{ marginTop: 6 }}><div className="num">{h ? '$••••' : money(bal)}</div><button className="pill" onClick={() => { setCv('add'); go('convert') }}>+ Add money</button></div>
-      <span className="chip"><I n="alert" /> Demo: test funds, no blockchain yet</span>
+      <div className="between" style={{ marginTop: 6 }}>
+        <div className="balbox" onPointerDown={() => h && setPeek(true)} onPointerUp={() => setPeek(false)} onPointerLeave={() => setPeek(false)} onPointerCancel={() => setPeek(false)} onContextMenu={e => e.preventDefault()}>
+          <div key={CUR + veiled} className={'num flip' + (veiled ? ' veil' : '')} style={{ fontSize: shown.length > 12 ? 24 : shown.length > 10 ? 30 : shown.length > 8 ? 36 : undefined }} role="text" aria-label={veiled ? 'Balance hidden. Press and hold to reveal.' : money(bal)}>{shown}</div>
+          <span className="small alt">{veiled ? 'Hold to reveal' : '≈ ' + alt(st.balance)}</span></div>
+        <button className="pill" onClick={() => { setCv('add'); go('convert') }}>+ Add money</button></div>
+      <div className="between" style={{ marginTop: 10 }}><span className="chip" style={{ margin: 0 }}><I n="alert" /> Demo: test funds</span>
+        <div className="cur" role="group" aria-label="Show amounts in">{[['USD', '$'], ['NGN', '₦']].map(([k, l]) => <button key={k} className={CUR === k ? 'on' : ''} aria-pressed={CUR === k} onClick={() => set(s => ({ ...s, settings: { ...s.settings, cur: k } }))}>{l}</button>)}</div></div>
     </div>
     <button className="strip" onClick={() => go('privacy')}><I n="shield" s={20} /><span>Privacy check-up</span><b>{done} of {ck.length}</b><span aria-hidden="true">›</span></button>
     {st.txs.length > 0 && <section className="wid slim">{st.txs.slice(0, 3).map(t => <TxRow key={t.id} t={t} onClick={() => setSel(t)} />)}</section>}
@@ -292,8 +308,8 @@ function BankSheet({ bank, choose, close }) {
 function Convert({ st, set, go, say, cv, setCv }) {
   const [amt, setAmt] = useState(''), [bank, setBank] = useState(''), [pick, setPick] = useState(false), [acct, setAcct] = useState(''), [phase, setPhase] = useState('form'), [step, setStep] = useState(0)
   const add = cv === 'add', n = parseFloat(amt) || 0
-  const usd = add ? +(n / chain.RATE).toFixed(2) : n, ngn = add ? n : Math.round(n * chain.RATE)
-  const ok = add ? n >= 1000 : n > 0 && n <= st.balance && !!bank && /^\d{10}$/.test(acct)
+  const usd = add ? +(n / chain.RATE).toFixed(6) : toUSD(n), ngn = add ? n : Math.round(usd * chain.RATE)
+  const ok = add ? n >= 1000 : usd > 0 && usd <= st.balance && !!bank && /^\d{10}$/.test(acct)
   const stages = add ? ['Bank transfer received', 'Converted to USDC', 'Moved to private USDCx'] : ['Moved out of private mode (public step)', 'Converted to naira', 'Sent to your bank']
   useEffect(() => {
     if (phase !== 'run') return
@@ -320,19 +336,19 @@ function Convert({ st, set, go, say, cv, setCv }) {
   return (<>
     <div className="top"><Back go={go} /><h1>Naira ⇄ USDCx</h1></div>
     <div className="seg" role="tablist">{[['add', 'Add money'], ['out', 'Cash out']].map(([k, l]) => <button key={k} role="tab" aria-selected={cv === k} className={cv === k ? 'on' : ''} onClick={() => { setCv(k); setAmt('') }}>{l}</button>)}</div>
-    <div className="field"><label htmlFor="ca" className="muted small">{add ? 'Amount in naira (₦)' : 'Amount to cash out ($ USDCx)'}</label>
-      <input id="ca" className="in" inputMode="decimal" value={amt} onChange={e => setAmt(e.target.value.replace(/[^\d.]/g, ''))} placeholder={add ? '5000' : '25'} /></div>
-    <div className="seg small-seg">{(add ? [5000, 10000, 50000] : [10, 25, 50]).map(v => <button key={v} onClick={() => setAmt(String(v))}>{add ? '₦' + v.toLocaleString() : '$' + v}</button>)}{!add && <button onClick={() => setAmt(String(st.balance))}>Max</button>}</div>
+    <div className="field"><label htmlFor="ca" className="muted small">{add ? 'Amount in naira (₦)' : `Amount to cash out (${sym()})`}</label>
+      <input id="ca" className="in" inputMode="decimal" value={amt} onChange={e => setAmt(e.target.value.replace(/[^\d.]/g, ''))} placeholder={add ? '5000' : CUR === 'NGN' ? '25000' : '25'} /></div>
+    <div className="seg small-seg">{(add ? [5000, 10000, 50000] : CUR === 'NGN' ? [10000, 25000, 50000] : [10, 25, 50]).map(v => <button key={v} onClick={() => setAmt(String(v))}>{(add ? '₦' : sym()) + v.toLocaleString()}</button>)}{!add && <button onClick={() => setAmt(String(fromUSD(st.balance)))}>Max</button>}</div>
     {!add && <><div className="field"><span className="muted small">Bank</span>
         <button className="in picker" onClick={() => setPick(true)} aria-haspopup="dialog"><span className={bank ? '' : 'muted'}>{bank || 'Select bank'}</span><span aria-hidden="true">▾</span></button></div>
       <div className="field"><label htmlFor="ac" className="muted small">Account number</label><input id="ac" className="in" inputMode="numeric" maxLength={10} value={acct} onChange={e => setAcct(e.target.value.replace(/\D/g, ''))} placeholder="0123456789" /></div></>}
     <p className="muted small">{n > 0 ? (add ? `You get about ${money(usd)} USDCx.` : `You receive about ₦${ngn.toLocaleString()}.`) : 'Enter an amount.'} Demo rate: ₦{chain.RATE.toLocaleString()} = $1. Fees and the real rate come from the partner.</p>
     {add && n > 0 && n < 1000 && <p className="err">Minimum is ₦1,000 in this demo</p>}
-    {!add && n > st.balance && <p className="err">Amount is more than your balance</p>}
+    {!add && usd > st.balance && <p className="err">Amount is more than your balance</p>}
     <div className="notice">{add ? 'A licensed partner handles the bank transfer and conversion, and will ask you to verify your ID before your first deposit. Skipped in this demo.' : 'Cashing out is a public step on the network, so this amount is not private. Your partner will also check your ID before the first cash-out. Skipped in this demo.'}</div>
     {pick && <BankSheet bank={bank} choose={b => { setBank(b); setPick(false) }} close={() => setPick(false)} />}
     <button className="btn" disabled={!ok} style={{ marginTop: 'auto' }} onClick={() => add ? setPhase('pay') : (setStep(0), setPhase('run'))}>{add ? 'Continue' : 'Cash out'}</button>
-    {add && <button className="link" onClick={() => { set(s => chain.fund(s, 100)); say('Added $100.00 test funds') }}>Just want quick demo money? Get $100 test funds</button>}
+    {add && <button className="link" onClick={() => { set(s => chain.fund(s, 100)); say(`Added ${money(100)} test funds`) }}>Just want quick demo money? Get {money(100)} test funds</button>}
   </>)
 }
 
@@ -348,7 +364,7 @@ function Notifs({ st, set, go, lock }) {
 function TopUp({ st, set, go, say, svc, setSvc }) {
   const [net, setNet] = useState('MTN'), [num, setNum] = useState(''), [amt, setAmt] = useState(0), [plan, setPlan] = useState('')
   const plans = [['500 MB', 300], ['1 GB', 500], ['2 GB', 900], ['5 GB', 1800]]
-  const usd = +(amt / chain.RATE).toFixed(2)
+  const usd = +(amt / chain.RATE).toFixed(6)
   const err = amt > 0 && usd > st.balance ? 'Not enough balance' : ''
   const ok = /^0[789]\d{9}$/.test(num) && amt > 0 && !err
   const buy = () => { set(s => chain.bill(s, `${svc === 'airtime' ? 'Airtime' : 'Data ' + plan} · ${net} ${num.slice(-4)}`, usd)); say('Top-up successful (demo)'); go('home') }
@@ -366,7 +382,7 @@ function TopUp({ st, set, go, say, svc, setSvc }) {
 
 function Vault({ st, set, go, say }) {
   const [name, setName] = useState(''), [target, setTarget] = useState('')
-  const t = parseFloat(target) || 0
+  const t = toUSD(parseFloat(target) || 0)
   const add = (g, n) => { if (n > st.balance) return say('Not enough balance'); set(s => chain.toVault(s, g.id, n)); say(`Saved ${money(n)} to ${g.name}`) }
   return (<>
     <h1>Vault</h1><p className="muted">Set money aside for something you want. Test funds only.</p>
@@ -374,11 +390,11 @@ function Vault({ st, set, go, say }) {
     {st.goals.map(g => (
       <section className="wid" key={g.id}><div className="between"><h2>{g.name}</h2><b className="num amt">{money(g.saved)} <span className="muted small">/ {money(g.target)}</span></b></div>
         <div className="prog" role="progressbar" aria-valuemin="0" aria-valuemax={g.target} aria-valuenow={g.saved}><span style={{ width: Math.min(100, g.saved / g.target * 100) + '%' }} /></div>
-        <div className="two" style={{ marginTop: 12, gridTemplateColumns: '1fr 1fr 1fr' }}><button className="btn sec" onClick={() => add(g, 10)}>+ $10</button><button className="btn sec" onClick={() => add(g, 25)}>+ $25</button>
+        <div className="two" style={{ marginTop: 12, gridTemplateColumns: '1fr 1fr 1fr' }}><button className="btn sec" onClick={() => add(g, 10)}>+ {money(10)}</button><button className="btn sec" onClick={() => add(g, 25)}>+ {money(25)}</button>
           <button className="btn sec" onClick={() => { set(s => chain.fromVault(s, g.id)); say('Moved back to your balance') }}>Withdraw</button></div></section>))}
     <section className="wid"><h2 style={{ marginBottom: 10 }}>New goal</h2>
       <div className="field"><label htmlFor="gn" className="muted small">What are you saving for?</label><input id="gn" className="in" value={name} maxLength={24} onChange={e => setName(e.target.value)} placeholder="Laptop" /></div>
-      <div className="field" style={{ marginTop: 10 }}><label htmlFor="gt" className="muted small">Target amount ($)</label><input id="gt" className="in" inputMode="decimal" value={target} onChange={e => setTarget(e.target.value.replace(/[^\d.]/g, ''))} placeholder="500" /></div>
+      <div className="field" style={{ marginTop: 10 }}><label htmlFor="gt" className="muted small">{`Target amount (${sym()})`}</label><input id="gt" className="in" inputMode="decimal" value={target} onChange={e => setTarget(e.target.value.replace(/[^\d.]/g, ''))} placeholder={CUR === 'NGN' ? '500000' : '500'} /></div>
       <button className="btn" style={{ marginTop: 14 }} disabled={!name.trim() || !(t > 0)} onClick={() => { set(s => chain.newGoal(s, name.trim(), t)); setName(''); setTarget(''); say('Goal created') }}>Create goal</button></section>
     <Nav on="vault" go={go} />
   </>)
@@ -414,7 +430,7 @@ function Send({ st, go, to, setTo, amt, setAmt, note, setNote }) {
   const id = clean(to)
   const rec = id ? chain.lookup(st, id) : null
   const me = id && id === st.user.payId
-  const n = parseFloat(amt) || 0
+  const n = toUSD(parseFloat(amt) || 0)
   const err = !id ? '' : me ? 'You cannot send to yourself' : !rec ? 'No account found with that Pay ID' : n > st.balance ? 'Amount is more than your balance' : ''
   const ok = rec && !me && n > 0 && n <= st.balance
   return (<>
@@ -424,28 +440,23 @@ function Send({ st, go, to, setTo, amt, setAmt, note, setNote }) {
       <div role="status" style={{ minHeight: 32 }}>
         {rec && !me && <div className="top" style={{ gap: 10 }}><Av name={rec.name} size={32} /><b style={{ fontWeight: 500 }}>{rec.name}</b><span className="mono muted">{short(rec.addr)}</span></div>}
         {err && <p className="err">{err}</p>}</div></div>
-    <div className="center" style={{ gap: 2 }}><div className="num" style={{ fontSize: 52 }}>${amt || '0'}</div><p className="muted small">Available {money(st.balance)}</p></div>
+    <div className="center" style={{ gap: 2 }}><div className="num" style={{ fontSize: 52 }}>{sym()}{amt || '0'}</div><p className="muted small">Available {money(st.balance)}</p></div>
     <input className="in slim" aria-label="Note (optional)" value={note} maxLength={60} onChange={e => setNote(e.target.value)} placeholder="Add a note (optional)" />
-    <div className="seg small-seg">{[5, 10, 25, 50].map(v => <button key={v} onClick={() => setAmt(String(v))}>${v}</button>)}<button onClick={() => setAmt(String(st.balance))}>Max</button></div>
+    <div className="seg small-seg">{(CUR === 'NGN' ? [5000, 10000, 25000, 50000] : [5, 10, 25, 50]).map(v => <button key={v} onClick={() => setAmt(String(v))}>{sym() + v.toLocaleString()}</button>)}<button onClick={() => setAmt(String(fromUSD(st.balance)))}>Max</button></div>
     <Keys on={k => setAmt(a => press(a, k))} />
     <button className="btn" disabled={!ok} onClick={() => go('review')}>Review</button>
   </>)
 }
 
 function Review({ st, set, go, to, amt, setLast, note }) {
-  const id = clean(to), rec = chain.lookup(st, id), n = parseFloat(amt)
+  const id = clean(to), rec = chain.lookup(st, id), n = toUSD(parseFloat(amt))
   const [busy, setBusy] = useState(false)
   const [e, setE] = useState('')
   if (!rec || !(n > 0)) return <><p>Nothing to review.</p><button className="btn" onClick={() => go('send')}>Back to send</button></>
-  const send = async () => {
-    if (st.settings.frozen) return go('blocked')
-    setBusy(true); setE('')
-    try { const t = await chain.send(st, id, n, note); set(s => chain.apply(s, t)); setLast(t); go('done') }
-    catch (x) { setE(x.message || 'Payment failed. Try again.'); setBusy(false) }
-  }
+  const send = () => { if (st.settings.frozen) return go('blocked'); go('sending') }
   return (<>
     <div className="top"><Back go={go} to="send" /><h1>Review payment</h1></div>
-    <div className="center" style={{ gap: 2 }}><div className="num" style={{ fontSize: 48 }}>{money(n)}</div><p className="muted">to @{id}</p></div>
+    <div className="center" style={{ gap: 2 }}><div className="num" style={{ fontSize: 48 }}>{money(n)}</div><p className="muted">to @{id} · about {alt(n)}</p></div>
     <div><R k="Name" v={rec.name} /><R k="Address" v={short(rec.addr)} mono /><R k="Network fee" v="None in demo mode" />{note && <R k="Note" v={note} />}</div>
     <div className="box"><b>Who can see this (when live)</b>
       <span><b>The public:</b> nothing</span><span><b>You and {rec.name}:</b> amount and names</span><span><b>Compliance partner:</b> details, for safety checks</span></div>
@@ -453,6 +464,46 @@ function Review({ st, set, go, to, amt, setLast, note }) {
     <div style={{ marginTop: 'auto', display: 'grid', gap: 10 }}>
       <button className="btn" disabled={busy} onClick={send}>{busy ? 'Sending…' : `Send ${money(n)}`}</button>
       <button className="btn sec" disabled={busy} onClick={() => go('send')}>Cancel</button></div>
+  </>)
+}
+
+function useScramble(text, on) {
+  const [v, setV] = useState(text)
+  useEffect(() => {
+    if (!on) { setV(text); return }
+    const g = '█▓▒░#@%&0123456789'
+    const t = setInterval(() => setV([...text].map(c => /[\d]/.test(c) ? g[Math.floor(Math.random() * g.length)] : c).join('')), 70)
+    return () => clearInterval(t)
+  }, [text, on])
+  return v
+}
+function Sending({ st, set, go, to, amt, note, setLast }) {
+  const id = clean(to), rec = chain.lookup(st, id), n = toUSD(parseFloat(amt))
+  const [step, setStep] = useState(0), [err, setErr] = useState('')
+  const stages = ['Encrypting the details', 'Generating the proof', 'Verifying on the network', 'Settled privately']
+  const shown = useScramble(money(n), step < 3 && !err)
+  useEffect(() => {
+    let i = 0, dead = false
+    const t = setInterval(async () => {
+      if (dead) return
+      i++; setStep(i)
+      if (i === 3) {
+        clearInterval(t)
+        try { const tx = await chain.send(st, id, n, note); if (dead) return; set(s => chain.apply(s, tx)); setLast(tx); setStep(4); setTimeout(() => { if (!dead) go('done') }, 1300) }
+        catch (x) { setErr(x.message || 'Payment failed') }
+      }
+    }, 1100)
+    return () => { dead = true; clearInterval(t) }
+  }, [])
+  if (!rec) return <button className="btn" onClick={() => go('send')}>Back</button>
+  return (<>
+    <div className="center" style={{ marginTop: 24, gap: 14 }}>
+      <div className="orbwrap" aria-hidden="true"><Av name={st.user.name} size={52} /><span className="beam"><i /><i /><i /></span><span className="core" /><span className="beam"><i /><i /><i /></span><Av name={rec.name} size={52} /></div>
+      <div className="num" style={{ fontSize: 44 }} aria-label={step >= 3 ? money(n) : 'Amount hidden while sending'}>{shown}</div>
+      <p className="muted">to @{id}</p>
+    </div>
+    <section>{stages.map((l, i) => <div key={l} className={'stage ' + (step > i ? 'done' : step === i ? 'now' : '')}><span className="dotc">{step > i && <I n="check" s={14} />}</span>{l}</div>)}</section>
+    {err ? <><p className="err" role="alert">{err}</p><button className="btn" onClick={() => go('send')}>Back</button></> : <p className="muted small center" role="status">Demo: this shows what will happen on the real network.</p>}
   </>)
 }
 
@@ -479,7 +530,7 @@ function Receive({ st, go, set, say }) {
 
 function Request({ st, go, set, say }) {
   const [amt, setA] = useState(''), [note, setN] = useState(''), [made, setMade] = useState(false)
-  const n = parseFloat(amt) || 0
+  const n = toUSD(parseFloat(amt) || 0)
   if (made) return (<>
     <div className="top"><Back go={() => setMade(false)} /><h1>Your request</h1></div>
     <PayCard u={st.user} set={set} say={say} amt={n} note={note} />
@@ -488,7 +539,7 @@ function Request({ st, go, set, say }) {
   </>)
   return (<>
     <div className="top"><Back go={go} /><h1>Request money</h1></div>
-    <div className="center" style={{ gap: 2 }}><div className="num" style={{ fontSize: 52 }}>${amt || '0'}</div><p className="muted small">How much do you want to receive?</p></div>
+    <div className="center" style={{ gap: 2 }}><div className="num" style={{ fontSize: 52 }}>{sym()}{amt || '0'}</div><p className="muted small">How much do you want to receive?</p></div>
     <input className="in slim" aria-label="Note (optional)" value={note} maxLength={60} onChange={e => setN(e.target.value)} placeholder="What is it for? (optional)" />
     <Keys on={k => setA(a => press(a, k))} />
     <button className="btn" disabled={!(n > 0)} onClick={() => setMade(true)}>Create request</button>
@@ -562,6 +613,7 @@ function Settings({ st, set, go, lock, setLock, setPinMode, reset: doReset }) {
       <div className="field"><label htmlFor="n" className="muted small">Display name</label>
         <input id="n" className="in" value={name} onChange={e => setName(e.target.value)} onBlur={() => name.trim() && set(x => ({ ...x, user: { ...x.user, name: name.trim() } }))} /></div>
       <R k="Pay ID" v={'@' + st.user.payId} /></section>
+    <section className="grp"><h2>Display</h2><div className="rowbtn" style={{ display: 'grid', gap: 8 }}><span>Show amounts in</span><div className="seg small-seg">{[['USD', 'Dollars ($)'], ['NGN', 'Naira (₦)']].map(([k, l]) => <button key={k} className={CUR === k ? 'on' : ''} onClick={() => set(x => ({ ...x, settings: { ...x.settings, cur: k } }))}>{l}</button>)}</div><span className="muted small">Demo rate: ₦{FX.toLocaleString()} = $1</span></div></section>
     <section className="grp"><h2>Privacy</h2>{tog('hide', 'Hide balance')}
       <details><summary>What is private?</summary><p>When live, private transfers are designed to be hidden from the public, while you, the recipient and a compliance partner can see details. Deposits and cash-outs are public steps. This demo does not use a blockchain.</p></details></section>
     <section className="grp"><h2>Notifications</h2>{tog('recv', 'Payments received')}{tog('sent', 'Payments sent')}{tog('sec', 'Security alerts')}{tog('news', 'Product news')}
