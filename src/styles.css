@@ -130,3 +130,12 @@ details{border-top:1px solid var(--line);padding:12px 0}summary{cursor:pointer}d
 .stage.done{color:var(--text)}.stage.done .dotc{background:var(--g);border-color:var(--g);color:#04140D}
 .stage.now{color:var(--text)}.stage.now .dotc{border-color:var(--g);border-top-color:transparent;animation:s 1s linear infinite}
 .notice{padding:14px 16px;border-radius:14px;background:rgba(214,181,109,.08);border-left:3px solid var(--gold);color:var(--muted);font-size:14px}
+
+.card.bal .num{font-size:clamp(28px,9.2vw,40px);min-width:0}
+.card.bal .between{gap:10px;flex-wrap:nowrap}
+.card.bal .pill{padding:7px 14px;font-size:13px;flex:none}
+.picker{display:flex;align-items:center;justify-content:space-between;text-align:left;background:var(--panel)}
+.banklist{max-height:52vh;overflow-y:auto;display:grid;gap:2px;align-content:start}
+.bk{display:flex;align-items:center;gap:12px;width:100%;padding:10px 6px;border:0;background:none;color:var(--text);text-align:left;border-radius:12px;font-size:16px}
+.bk span{flex:1}.bk.on{background:#12332e;color:var(--g)}.bk:active{background:#16303a}
+.bk .av{flex:none}.bk>span:not(.av){flex:1}

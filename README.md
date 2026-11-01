@@ -67,3 +67,6 @@ All of it runs on local demo data: no real payments, no real telecom purchases, 
 Home > Add money / Cash out. Add money: naira, bank transfer, converted to USDC, moved to private USDCx. Cash out: USDCx leaves private mode
 (a public step), converts to naira, goes to a bank account. Everything is simulated. Going live needs a licensed ramp partner and the issuer bridge;
 SolaceFi should not hold customer funds or run the bridge itself.
+
+## v0.8.1
+Smaller Add money button, and a searchable cash-out bank picker with 35 Nigerian banks and fintechs (OPay, Moniepoint, PalmPay, Kuda and more). The list is a sample; the live list will come from the licensed partner.

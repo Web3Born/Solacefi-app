@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import QRCode from 'qrcode'
 import * as chain from './chain.js'
 import { App as CapApp } from '@capacitor/app'
+import { BANKS, POPULAR } from './banks.js'
 import { loadLock, saveLock, makeLock, check, weak, failed, cleared, secure } from './lock.js'
 
 const P = {
@@ -17,7 +18,7 @@ const short = a => a.slice(0, 8) + '…' + a.slice(-4)
 const when = t => { const d = Math.floor((Date.now() - t) / 864e5); return d < 1 ? 'Today' : d < 2 ? 'Yesterday' : new Date(t).toLocaleDateString() }
 const nm = c => c.includes('@') ? c.split('@')[0].replace(/^./, x => x.toUpperCase()) : 'Friend'
 const clean = v => v.toLowerCase().replace(/^@/, '').trim()
-const VERSION = '0.8.0'
+const VERSION = '0.8.1'
 const press = (a, k) => k === '←' ? a.slice(0, -1) : k === '.' ? (a.includes('.') ? a : (a || '0') + '.') : /\.\d{2}$/.test(a) ? a : a === '0' ? k : a + k
 const Keys = ({ on }) => <div className="keys">{['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '←'].map(k => <button key={k} aria-label={k === '←' ? 'Delete' : k} onClick={() => on(k)}>{k}</button>)}</div>
 const Logo = () => <span className="logo"><img src="/logo-mark.png" alt="" /><span>Solace<b>Fi</b></span></span>
@@ -267,11 +268,32 @@ function Home({ st, set, go, setTo, say, lock, setPinMode, setSvc, setCv }) {
   </>)
 }
 
+function BankSheet({ bank, choose, close }) {
+  const [q, setQ] = useState('')
+  useEffect(() => { const k = e => e.key === 'Escape' && close(); addEventListener('keydown', k); return () => removeEventListener('keydown', k) }, [])
+  const f = q.trim().toLowerCase()
+  const list = f ? BANKS.filter(b => b.toLowerCase().includes(f)) : BANKS
+  const item = b => <button key={b} className={'bk' + (b === bank ? ' on' : '')} onClick={() => choose(b)}><Av name={b} size={34} /><span>{b}</span>{b === bank && <I n="check" s={18} />}</button>
+  return (
+    <div className="scrim" onClick={close}>
+      <div className="sheet" role="dialog" aria-modal="true" aria-label="Choose a bank" onClick={e => e.stopPropagation()}>
+        <span className="grab" /><h2>Choose a bank</h2>
+        <input className="in slim" autoFocus aria-label="Search banks" placeholder="Search banks" value={q} onChange={e => setQ(e.target.value)} />
+        <div className="banklist">
+          {!f && <><p className="muted small">Popular</p>{POPULAR.map(item)}<p className="muted small" style={{ marginTop: 14 }}>All banks</p></>}
+          {list.map(item)}
+          {list.length === 0 && <p className="muted center">No bank matches “{q}”.</p>}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function Convert({ st, set, go, say, cv, setCv }) {
-  const [amt, setAmt] = useState(''), [bank, setBank] = useState('GTBank'), [acct, setAcct] = useState(''), [phase, setPhase] = useState('form'), [step, setStep] = useState(0)
+  const [amt, setAmt] = useState(''), [bank, setBank] = useState(''), [pick, setPick] = useState(false), [acct, setAcct] = useState(''), [phase, setPhase] = useState('form'), [step, setStep] = useState(0)
   const add = cv === 'add', n = parseFloat(amt) || 0
   const usd = add ? +(n / chain.RATE).toFixed(2) : n, ngn = add ? n : Math.round(n * chain.RATE)
-  const ok = add ? n >= 1000 : n > 0 && n <= st.balance && /^\d{10}$/.test(acct)
+  const ok = add ? n >= 1000 : n > 0 && n <= st.balance && !!bank && /^\d{10}$/.test(acct)
   const stages = add ? ['Bank transfer received', 'Converted to USDC', 'Moved to private USDCx'] : ['Moved out of private mode (public step)', 'Converted to naira', 'Sent to your bank']
   useEffect(() => {
     if (phase !== 'run') return
@@ -301,12 +323,14 @@ function Convert({ st, set, go, say, cv, setCv }) {
     <div className="field"><label htmlFor="ca" className="muted small">{add ? 'Amount in naira (₦)' : 'Amount to cash out ($ USDCx)'}</label>
       <input id="ca" className="in" inputMode="decimal" value={amt} onChange={e => setAmt(e.target.value.replace(/[^\d.]/g, ''))} placeholder={add ? '5000' : '25'} /></div>
     <div className="seg small-seg">{(add ? [5000, 10000, 50000] : [10, 25, 50]).map(v => <button key={v} onClick={() => setAmt(String(v))}>{add ? '₦' + v.toLocaleString() : '$' + v}</button>)}{!add && <button onClick={() => setAmt(String(st.balance))}>Max</button>}</div>
-    {!add && <><div className="seg small-seg" aria-label="Bank" style={{ flexWrap: 'wrap' }}>{['GTBank', 'Access', 'Zenith', 'UBA', 'First Bank'].map(b => <button key={b} className={bank === b ? 'on' : ''} onClick={() => setBank(b)}>{b}</button>)}</div>
+    {!add && <><div className="field"><span className="muted small">Bank</span>
+        <button className="in picker" onClick={() => setPick(true)} aria-haspopup="dialog"><span className={bank ? '' : 'muted'}>{bank || 'Select bank'}</span><span aria-hidden="true">▾</span></button></div>
       <div className="field"><label htmlFor="ac" className="muted small">Account number</label><input id="ac" className="in" inputMode="numeric" maxLength={10} value={acct} onChange={e => setAcct(e.target.value.replace(/\D/g, ''))} placeholder="0123456789" /></div></>}
     <p className="muted small">{n > 0 ? (add ? `You get about ${money(usd)} USDCx.` : `You receive about ₦${ngn.toLocaleString()}.`) : 'Enter an amount.'} Demo rate: ₦{chain.RATE.toLocaleString()} = $1. Fees and the real rate come from the partner.</p>
     {add && n > 0 && n < 1000 && <p className="err">Minimum is ₦1,000 in this demo</p>}
     {!add && n > st.balance && <p className="err">Amount is more than your balance</p>}
     <div className="notice">{add ? 'A licensed partner handles the bank transfer and conversion, and will ask you to verify your ID before your first deposit. Skipped in this demo.' : 'Cashing out is a public step on the network, so this amount is not private. Your partner will also check your ID before the first cash-out. Skipped in this demo.'}</div>
+    {pick && <BankSheet bank={bank} choose={b => { setBank(b); setPick(false) }} close={() => setPick(false)} />}
     <button className="btn" disabled={!ok} style={{ marginTop: 'auto' }} onClick={() => add ? setPhase('pay') : (setStep(0), setPhase('run'))}>{add ? 'Continue' : 'Cash out'}</button>
     {add && <button className="link" onClick={() => { set(s => chain.fund(s, 100)); say('Added $100.00 test funds') }}>Just want quick demo money? Get $100 test funds</button>}
   </>)
