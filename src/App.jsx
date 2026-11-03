@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import QRCode from 'qrcode'
 import * as chain from './chain.js'
 import { App as CapApp } from '@capacitor/app'
 import { BANKS, POPULAR } from './banks.js'
+import * as dir from './directory.js'
+import { isNative, bioAvailable, bioPrompt } from './biometric.js'
 import { loadLock, saveLock, makeLock, check, weak, failed, cleared, secure } from './lock.js'
 
 const P = {
@@ -10,7 +12,7 @@ const P = {
   home: 'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10', qr: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h3v3h-3zM20 14v6h-6',
   gear: 'M12 8a4 4 0 100 8 4 4 0 000-8zM4 12h2M18 12h2M12 4v2M12 18v2', check: 'M5 12l5 5L20 7',
   eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 100 6 3 3 0 000-6z',
-  lock: 'M5 11h14v10H5zM8 11V8a4 4 0 018 0v3', del: 'M21 5H9l-6 7 6 7h12zM15 9l-4 6M11 9l4 6', bell: 'M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0', help: 'M12 3a9 9 0 100 18 9 9 0 000-18zM9.5 9a2.5 2.5 0 115 0c0 1.5-2.5 2-2.5 3.5M12 17h.01', phone: 'M7 2h10v20H7zM11 18h2', vault: 'M4 5h16v14H4zM12 9a3 3 0 100 6 3 3 0 000-6zM4 9h2M4 15h2', shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4', more: 'M6 12h.01M12 12h.01M18 12h.01', bank: 'M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18', wifi: 'M2 9a15 15 0 0120 0M5 13a10 10 0 0114 0M9 17a4 4 0 016 0M12 20h.01', tv: 'M3 7h18v12H3zM8 3l4 4 4-4', card2: 'M3 6h18v12H3zM3 10h18', req: 'M3 6h18v12H3zM3 7l9 6 9-6', list: 'M4 6h16M4 12h16M4 18h10', alert: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v6M12 16.5h.01'
+  lock: 'M5 11h14v10H5zM8 11V8a4 4 0 018 0v3', fp: 'M12 11v3c0 2.5-.6 4.5-1.6 6.5M8 8.5A5 5 0 0117 11v2.5c0 1.8-.3 3.5-.9 5M5.5 11a6.5 6.5 0 0112.2-3M5 14.5c0 1.5-.2 2.8-.6 4M15 20c.6-1.3 1-2.7 1.2-4.2', del: 'M21 5H9l-6 7 6 7h12zM15 9l-4 6M11 9l4 6', bell: 'M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0', help: 'M12 3a9 9 0 100 18 9 9 0 000-18zM9.5 9a2.5 2.5 0 115 0c0 1.5-2.5 2-2.5 3.5M12 17h.01', phone: 'M7 2h10v20H7zM11 18h2', vault: 'M4 5h16v14H4zM12 9a3 3 0 100 6 3 3 0 000-6zM4 9h2M4 15h2', shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4', more: 'M6 12h.01M12 12h.01M18 12h.01', bank: 'M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18', wifi: 'M2 9a15 15 0 0120 0M5 13a10 10 0 0114 0M9 17a4 4 0 016 0M12 20h.01', tv: 'M3 7h18v12H3zM8 3l4 4 4-4', card2: 'M3 6h18v12H3zM3 10h18', req: 'M3 6h18v12H3zM3 7l9 6 9-6', list: 'M4 6h16M4 12h16M4 18h10', alert: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v6M12 16.5h.01'
 }
 const I = ({ n, s = 22 }) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={P[n]} /></svg>
 let CUR = 'USD'
@@ -24,7 +26,7 @@ const short = a => a.slice(0, 8) + '…' + a.slice(-4)
 const when = t => { const d = Math.floor((Date.now() - t) / 864e5); return d < 1 ? 'Today' : d < 2 ? 'Yesterday' : new Date(t).toLocaleDateString() }
 const nm = c => c.includes('@') ? c.split('@')[0].replace(/^./, x => x.toUpperCase()) : 'Friend'
 const clean = v => v.toLowerCase().replace(/^@/, '').trim()
-const VERSION = '0.9.0'
+const VERSION = '0.10.0'
 const press = (a, k) => k === '←' ? a.slice(0, -1) : k === '.' ? (a.includes('.') ? a : (a || '0') + '.') : /\.\d{2}$/.test(a) ? a : a === '0' ? k : a + k
 const Keys = ({ on }) => <div className="keys">{['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '←'].map(k => <button key={k} aria-label={k === '←' ? 'Delete' : k} onClick={() => on(k)}>{k}</button>)}</div>
 const Logo = () => <span className="logo"><img src="/logo-mark.png" alt="" /><span>Solace<b>Fi</b></span></span>
@@ -117,7 +119,7 @@ const R = ({ k, v, mono }) => <div className="row between"><span className="mute
 export default function App() {
   const [st, setSt] = useState(chain.load)
   CUR = st.settings.cur || 'USD'
-  const [scr, setScr] = useState(() => chain.load().user?.payId ? 'home' : 'welcome')
+  const [scr, setScr] = useState(() => chain.load().user?.payId ? 'home' : chain.load().user ? 'payid' : 'welcome')
   const [to, setTo] = useState('')
   const [amt, setAmt] = useState('')
   const [last, setLast] = useState(null)
@@ -147,6 +149,25 @@ export default function App() {
       setNote((q.get('note') || '').slice(0, 60)); setScr('send')
     }
   }, [])
+  const seenIn = useRef(new Set())
+  useEffect(() => {
+    if (!dir.live() || !st.user?.payId) return
+    let un, dead = false
+    dir.listen(list => list.forEach(t => {
+      if (seenIn.current.has(t.id)) return
+      seenIn.current.add(t.id)
+      set(s => (s.claimed || []).includes(t.id) ? s : chain.receive(s, t))
+      dir.markClaimed(t.id).catch(() => {})
+      say(`Received ${money(t.amount)} from @${t.from}`)
+    })).then(f => { un = f; if (dead) f() }).catch(() => {})
+    return () => { dead = true; un && un() }
+  }, [st.user?.payId])
+  useEffect(() => {
+    if (!dir.live() || !st.user?.payId || st.user.uid) return
+    dir.claim(st.user.payId, st.user.name, st.user.address)
+      .then(uid => set(s => ({ ...s, user: { ...s.user, uid } })))
+      .catch(() => { say('Your Pay ID is taken online. Please pick a new one.'); set(s => ({ ...s, user: { ...s.user, payId: null } })); setScr('payid') })
+  }, [st.user?.payId])
   const p = { st, set, go: setScr, to, setTo, amt, setAmt, last, setLast, say, note, setNote, lock, setLock, pinMode, setPinMode, reset, svc, setSvc, cv, setCv }
   const S = { welcome: Welcome, payid: PayId, ready: Ready, home: Home, send: Send, review: Review, done: Done, receive: Receive, request: Request, pin: Pin, notifs: Notifs, topup: TopUp, convert: Convert, sending: Sending, vault: Vault, privacy: Privacy, activity: Activity, settings: Settings, blocked: Blocked }[scr]
   if (locked && lock) return <main className="app"><div className="scr"><LockScreen lock={lock} setLock={setLock} open={() => setLocked(false)} reset={reset} user={st.user} /></div></main>
@@ -172,20 +193,34 @@ function Welcome({ set, go }) {
 }
 
 function PayId({ st, set, go }) {
-  const [v, setV] = useState('')
+  const [v, setV] = useState(''), [free, setFree] = useState(false), [busy, setBusy] = useState(false), [msg, setMsg] = useState('')
   const id = clean(v)
   const valid = /^[a-z0-9_.]{3,20}$/.test(id)
-  const free = valid && chain.available(st, id)
-  const claim = e => { e.preventDefault(); set(s => chain.claim(s, id)); go('ready') }
+  useEffect(() => {
+    setMsg('')
+    if (!valid) return setFree(false)
+    if (!dir.live()) return setFree(chain.available(st, id))
+    setFree(null); let dead = false
+    const t = setTimeout(() => dir.available(id).then(x => !dead && setFree(x)).catch(() => !dead && (setFree(false), setMsg('Could not reach the directory. Check your connection.'))), 400)
+    return () => { dead = true; clearTimeout(t) }
+  }, [id])
+  const claim = async e => {
+    e.preventDefault(); setBusy(true); setMsg('')
+    try {
+      const next = chain.claim(st, id)
+      const uid = dir.live() ? await dir.claim(id, st.user.name, next.user.address) : undefined
+      set(() => uid ? { ...next, user: { ...next.user, uid }, dir: { ...next.dir, [id]: { ...next.dir[id], uid } } } : next); go('ready')
+    } catch { setBusy(false); setFree(false); setMsg('That Pay ID was just taken. Try another.') }
+  }
   return (
     <form onSubmit={claim} style={{ display: 'contents' }}>
       <h1>Choose your Pay ID</h1>
       <p className="muted">Friends type this to pay you. Your wallet address stays behind the scenes.</p>
       <div className="field"><label htmlFor="p" className="muted small">Pay ID</label>
         <div className="in pid"><span>@</span><input id="p" value={v.replace(/^@/, '')} onChange={e => setV(e.target.value)} autoComplete="off" autoCapitalize="none" spellCheck="false" /></div>
-        <div role="status">{id && (!valid ? <p className="err">Use 3 to 20 letters, numbers, _ or .</p> : free ? <p className="ok">@{id} is available</p> : <p className="err">@{id} is taken</p>)}</div>
+        <div role="status">{id && (!valid ? <p className="err">Use 3 to 20 letters, numbers, _ or .</p> : free === null ? <p className="muted small">Checking…</p> : free ? <p className="ok">@{id} is available</p> : <p className="err">{msg || `@${id} is taken`}</p>)}</div>
       </div>
-      <button className="btn" disabled={!free} style={{ marginTop: 'auto' }}>Claim @{id || '…'}</button>
+      <button className="btn" disabled={!free || busy} style={{ marginTop: 'auto' }}>{busy ? 'Claiming…' : `Claim @${id || '…'}`}</button>
     </form>
   )
 }
@@ -426,12 +461,19 @@ function Activity({ st, go }) {
   </>)
 }
 
-function Send({ st, go, to, setTo, amt, setAmt, note, setNote }) {
+function Send({ st, set, go, to, setTo, amt, setAmt, note, setNote }) {
   const id = clean(to)
   const rec = id ? chain.lookup(st, id) : null
   const me = id && id === st.user.payId
+  const [chk, setChk] = useState(false)
+  useEffect(() => {
+    if (!dir.live() || !/^[a-z0-9_.]{3,20}$/.test(id) || st.dir[id]) return
+    setChk(true); let dead = false
+    const t = setTimeout(() => dir.lookup(id).then(x => { if (!dead && x) set(s => ({ ...s, dir: { ...s.dir, [id]: x } })) }).catch(() => {}).finally(() => !dead && setChk(false)), 350)
+    return () => { dead = true; clearTimeout(t) }
+  }, [id])
   const n = toUSD(parseFloat(amt) || 0)
-  const err = !id ? '' : me ? 'You cannot send to yourself' : !rec ? 'No account found with that Pay ID' : n > st.balance ? 'Amount is more than your balance' : ''
+  const err = !id ? '' : me ? 'You cannot send to yourself' : !rec ? (chk ? '' : 'No account found with that Pay ID') : n > st.balance ? 'Amount is more than your balance' : ''
   const ok = rec && !me && n > 0 && n <= st.balance
   return (<>
     <div className="top"><Back go={go} /><h1>Send</h1></div>
@@ -439,6 +481,7 @@ function Send({ st, go, to, setTo, amt, setAmt, note, setNote }) {
       <input id="t" className="in" value={to} onChange={e => setTo(e.target.value)} placeholder="@adeola" autoComplete="off" autoCapitalize="none" spellCheck="false" />
       <div role="status" style={{ minHeight: 32 }}>
         {rec && !me && <div className="top" style={{ gap: 10 }}><Av name={rec.name} size={32} /><b style={{ fontWeight: 500 }}>{rec.name}</b><span className="mono muted">{short(rec.addr)}</span></div>}
+        {chk && !rec && <p className="muted small">Checking…</p>}
         {err && <p className="err">{err}</p>}</div></div>
     <div className="center" style={{ gap: 2 }}><div className="num" style={{ fontSize: 52 }}>{sym()}{amt || '0'}</div><p className="muted small">Available {money(st.balance)}</p></div>
     <input className="in slim" aria-label="Note (optional)" value={note} maxLength={60} onChange={e => setNote(e.target.value)} placeholder="Add a note (optional)" />
@@ -489,7 +532,13 @@ function Sending({ st, set, go, to, amt, note, setLast }) {
       i++; setStep(i)
       if (i === 3) {
         clearInterval(t)
-        try { const tx = await chain.send(st, id, n, note); if (dead) return; set(s => chain.apply(s, tx)); setLast(tx); setStep(4); setTimeout(() => { if (!dead) go('done') }, 1300) }
+        try {
+          const tx = await chain.send(st, id, n, note)
+          if (dir.live()) {
+            if (!rec.uid) throw new Error('This person cannot receive yet. Ask them to update the app.')
+            await dir.sendTransfer({ fromUid: st.user.uid || await dir.uid(), toUid: rec.uid, from: st.user.payId, to: id, amount: n, note: note || '' })
+          }
+          if (dead) return; set(s => chain.apply(s, tx)); setLast(tx); setStep(4); setTimeout(() => { if (!dead) go('done') }, 1300) }
         catch (x) { setErr(x.message || 'Payment failed') }
       }
     }, 1100)
@@ -546,12 +595,12 @@ function Request({ st, go, set, say }) {
   </>)
 }
 
-function PinPad({ value, onKey, error, disabled }) {
+function PinPad({ value, onKey, error, disabled, extra }) {
   const press = k => { try { navigator.vibrate?.(8) } catch {} onKey(k) }
   return (<>
     <div className={'dots big' + (error ? ' shake bad' : '')} role="img" aria-label={`${value.length} of 6 digits entered`}>{[...Array(6)].map((_, i) => <span key={i} className={i < value.length ? 'on' : ''} />)}</div>
     <p className="err center" role="alert" style={{ minHeight: 24 }}>{error}</p>
-    <div className="pkeys">{['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '←'].map(k => k === '' ? <span key="gap" /> : <button key={k} className={k === '←' ? 'del' : ''} disabled={disabled} aria-label={k === '←' ? 'Delete' : k} onClick={() => press(k)}>{k === '←' ? <I n="del" s={30} /> : k}</button>)}</div>
+    <div className="pkeys">{['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '←'].map(k => k === '' ? <span key="gap" className="gap">{extra}</span> : <button key={k} className={k === '←' ? 'del' : ''} disabled={disabled} aria-label={k === '←' ? 'Delete' : k} onClick={() => press(k)}>{k === '←' ? <I n="del" s={30} /> : k}</button>)}</div>
   </>)
 }
 const mask = c => !c ? '' : c.includes('@') ? c.replace(/^(.{2}).*(@.*)$/, '$1•••$2') : '•••' + c.slice(-4)
@@ -559,6 +608,8 @@ function LockScreen({ lock, setLock, open, reset, user }) {
   const [pin, setPin] = useState(''), [err, setErr] = useState(''), [now, setNow] = useState(Date.now())
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 500); return () => clearInterval(t) }, [])
   const wait = Math.max(0, Math.ceil((lock.until - now) / 1000))
+  const tryBio = async () => { if (await bioPrompt('Unlock SolaceFi')) { setLock(cleared(lock)); open() } }
+  useEffect(() => { if (lock.bio && !(lock.until > Date.now())) tryBio() }, [])
   const done = async p => {
     try {
       if (await check(lock, p)) { setLock(cleared(lock)); open(); return }
@@ -570,7 +621,7 @@ function LockScreen({ lock, setLock, open, reset, user }) {
   return (<>
     <div className="center lockhead"><Av name={user?.name || 'S'} size={72} /><h1>Welcome back{user?.name ? ', ' + user.name : ''}</h1><p className="muted small">{user?.contact ? mask(user.contact) : 'SolaceFi is locked'}</p>
       <p className="muted">{wait ? `Try again in ${wait}s` : 'Enter your 6-digit PIN'}</p></div>
-    <PinPad value={pin} onKey={key} error={err} disabled={!!wait} />
+    <PinPad value={pin} onKey={key} error={err} disabled={!!wait} extra={lock.bio ? <button className="bio" aria-label="Unlock with fingerprint" onClick={tryBio}><I n="fp" s={34} /></button> : null} />
     <button className="link" style={{ marginTop: 'auto' }} onClick={() => confirm('In demo mode there is no recovery. This clears all demo data on this device. Continue?') && reset()}>Forgot PIN?</button>
     <p className="muted small center">SolaceFi v{VERSION}</p>
   </>)
@@ -588,7 +639,7 @@ function Pin({ go, lock, setLock, say, pinMode }) {
     } else if (stage === 'new') {
       if (weak(p)) return setErr('Choose a less obvious PIN')
       setFirst(p); setStage('confirm')
-    } else if (p === first) { setLock(await makeLock(p, lock?.after ?? 60)); say('App lock is on'); go('settings') }
+    } else if (p === first) { setLock({ ...(await makeLock(p, lock?.after ?? 60)), bio: !!lock?.bio }); say('App lock is on'); go('settings') }
     else { setErr('PINs did not match. Try again.'); setStage('new') }
     } catch (e) { setErr('Could not save the PIN: ' + (e.message || e)) }
   }
@@ -600,12 +651,17 @@ function Pin({ go, lock, setLock, say, pinMode }) {
   </>)
 }
 
-function Settings({ st, set, go, lock, setLock, setPinMode, reset: doReset }) {
+function Settings({ st, set, go, say, lock, setLock, setPinMode, reset: doReset }) {
   const s = st.settings
   const [name, setName] = useState(st.user.name)
   const tog = (k, l) => <label className="tog"><span>{l}</span><input type="checkbox" role="switch" checked={!!s[k]} onChange={e => set(x => ({ ...x, settings: { ...x.settings, [k]: e.target.checked } }))} /></label>
   const reset = msg => { if (confirm(msg)) doReset() }
   const pin = m => { setPinMode(m); go('pin') }
+  const toggleBio = async () => {
+    if (lock.bio) { setLock({ ...lock, bio: false }); return say('Fingerprint unlock is off') }
+    if (!(await bioAvailable())) return say(isNative() ? 'Set up a fingerprint or face in your phone settings first' : 'Fingerprint unlock works in the Android app')
+    if (await bioPrompt('Turn on fingerprint unlock')) { setLock({ ...lock, bio: true }); say('Fingerprint unlock is on') } else say('Not confirmed')
+  }
   const after = v => setLock({ ...lock, after: v })
   return (<>
     <h1>Settings</h1>
@@ -621,10 +677,11 @@ function Settings({ st, set, go, lock, setLock, setPinMode, reset: doReset }) {
     <section className="grp"><h2>Security</h2>
       <button className="rowbtn" onClick={() => pin(lock ? 'off' : 'set')}><span>App lock (PIN)</span><span className={lock ? 'ok' : 'muted'}>{lock ? 'On' : 'Off'}</span></button>
       {lock && <button className="rowbtn" onClick={() => pin('change')}><span>Change PIN</span><span className="muted">›</span></button>}
+      {lock && <button className="rowbtn" onClick={toggleBio}><span>Fingerprint / face unlock</span><span className={lock.bio ? 'ok' : 'muted'}>{lock.bio ? 'On' : isNative() ? 'Off' : 'Android app only'}</span></button>}
       {lock && <div className="rowbtn" style={{ display: 'grid', gap: 8 }}><span>Lock after leaving the app</span><div className="seg small-seg">{[[0, 'Right away'], [60, '1 min'], [300, '5 min']].map(([v, l]) => <button key={v} className={lock.after === v ? 'on' : ''} onClick={() => after(v)}>{l}</button>)}</div></div>}
-      <div className="off"><R k="Passkey" v="Coming soon" /><R k="Recovery method" v="Coming soon" /><R k="Face or fingerprint unlock" v="Coming soon" /></div></section>
+      <div className="off"><R k="Passkey" v="Coming soon" /><R k="Recovery method" v="Coming soon" /></div></section>
     <section className="grp"><h2>Demo tools</h2>{tog('frozen', 'Simulate a paused account')}</section>
-    <section className="grp"><h2>About</h2><R k="Version" v={VERSION + ' (demo)'} /><R k="Network" v="None. Demo mode." /><R k="Secure storage" v={secure() ? 'Yes' : 'Basic mode'} />
+    <section className="grp"><h2>About</h2><R k="Version" v={VERSION + ' (demo)'} /><R k="Network" v="None. Demo mode." /><R k="Pay ID directory" v={dir.live() ? 'Shared online' : 'This phone only'} /><R k="Secure storage" v={secure() ? 'Yes' : 'Basic mode'} />
       <R k="Support" v={<a href="mailto:Solacefipay@gmail.com" style={{ color: 'var(--g)' }}>Email us</a>} /></section>
     <button className="btn sec" onClick={() => reset('Log out? In demo mode this clears the demo data on this device.')}>Log out</button>
     <button className="btn sec danger" onClick={() => reset('Delete your demo account and all demo data on this device?')}>Delete account</button>

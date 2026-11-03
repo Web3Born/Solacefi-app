@@ -2,11 +2,12 @@
 // To go live, replace the bodies of these functions with Aleo wallet / SDK calls
 // (see README) and keep the same signatures so the screens do not change.
 const K = 'solacefi.demo.v1'
+const LIVE = !!import.meta.env.VITE_FIREBASE_PROJECT_ID
 const A = 'acdefghjklmnpqrstuvwxyz023456789'
 const addr = () => 'aleo1' + Array.from({ length: 58 }, () => A[Math.floor(Math.random() * A.length)]).join('')
 const seed = () => ({ adeola: { name: 'Adeola', addr: addr() }, ngozi: { name: 'Ngozi', addr: addr() }, jumia: { name: 'Jumia', addr: addr() } })
 export const RATE = 1500 // DEMO rate: naira per dollar. Not a real exchange rate.
-export const fresh = () => ({ user: null, balance: 0, txs: [], goals: [], seen: 0, dir: seed(), settings: { frozen: false, hide: false, recv: true, sent: true, sec: true, news: false } })
+export const fresh = () => ({ user: null, balance: 0, txs: [], goals: [], seen: 0, dir: LIVE ? {} : seed(), claimed: [], settings: { frozen: false, hide: false, recv: true, sent: true, sec: true, news: false } })
 export const load = () => { try { const v = JSON.parse(localStorage.getItem(K)); return v ? { ...fresh(), ...v } : fresh() } catch { return fresh() } }
 export const save = s => { try { localStorage.setItem(K, JSON.stringify(s)) } catch {} }
 export const available = (s, id) => !s.dir[id]
@@ -30,3 +31,4 @@ export const fromVault = (s, id) => { const g = s.goals.find(x => x.id === id); 
 export const markSeen = s => ({ ...s, seen: Date.now() })
 export const onramp = (s, ngn, usd) => ({ ...s, balance: r2(s.balance + usd), txs: [tx('onramp', `Added ₦${ngn.toLocaleString()} (demo)`, usd), ...s.txs] })
 export const offramp = (s, usd, bank) => apply(s, tx('offramp', 'Cash out to ' + bank, usd))
+export const receive = (s, t) => ({ ...s, balance: r2(s.balance + t.amount), txs: [tx('in', 'From @' + t.from, t.amount, t.from, t.note || ''), ...s.txs], claimed: [...(s.claimed || []), t.id].slice(-200) })

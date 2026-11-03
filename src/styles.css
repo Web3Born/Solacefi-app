@@ -156,3 +156,6 @@ body{background:radial-gradient(60% 40% at 95% 0%,rgba(18,185,129,.16),transpare
 .beam{display:flex;gap:7px;width:64px;justify-content:center}.beam i{width:7px;height:7px;border-radius:50%;background:var(--g);opacity:.15;animation:flow 1.2s infinite}.beam i:nth-child(2){animation-delay:.2s}.beam i:nth-child(3){animation-delay:.4s}
 @keyframes flow{40%{opacity:1;transform:scale(1.4)}}
 .balbox .num{white-space:nowrap}
+
+.pkeys .gap{display:grid;place-items:center;width:100%}
+.pkeys button.bio{background:transparent;color:var(--g)}
