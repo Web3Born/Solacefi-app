@@ -24,10 +24,12 @@ const sym = () => CUR === 'NGN' ? '₦' : '$'
 const toUSD = a => +(CUR === 'NGN' ? a / FX : a).toFixed(6)
 const fromUSD = u => CUR === 'NGN' ? Math.round(u * FX) : u
 const short = a => a.slice(0, 8) + '…' + a.slice(-4)
-const when = t => { const d = Math.floor((Date.now() - t) / 864e5); return d < 1 ? 'Today' : d < 2 ? 'Yesterday' : new Date(t).toLocaleDateString() }
+const D1 = { day: 'numeric', month: 'short', year: 'numeric' }
+const fmt = t => new Date(t).toLocaleString('en-GB', { ...D1, hour: '2-digit', minute: '2-digit' })
+const when = t => { const d = Math.floor((Date.now() - t) / 864e5); return d < 1 ? 'Today' : d < 2 ? 'Yesterday' : new Date(t).toLocaleDateString('en-GB', D1) }
 const nm = c => c.includes('@') ? c.split('@')[0].replace(/^./, x => x.toUpperCase()) : 'Friend'
 const clean = v => v.toLowerCase().replace(/^@/, '').trim()
-const VERSION = '0.11.0'
+const VERSION = '0.11.1'
 const press = (a, k) => k === '←' ? a.slice(0, -1) : k === '.' ? (a.includes('.') ? a : (a || '0') + '.') : /\.\d{2}$/.test(a) ? a : a === '0' ? k : a + k
 const Keys = ({ on }) => <div className="keys">{['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '←'].map(k => <button key={k} aria-label={k === '←' ? 'Delete' : k} onClick={() => on(k)}>{k}</button>)}</div>
 const Logo = () => <span className="logo"><img src="/logo-mark.png" alt="" /><span>Solace<b>Fi</b></span></span>
@@ -75,7 +77,7 @@ function Sheet({ t, close }) {
       <div className="sheet" role="dialog" aria-modal="true" aria-label="Payment details" onClick={e => e.stopPropagation()}>
         <span className="grab" />
         <div className="center" style={{ gap: 4 }}><span className="num" style={{ fontSize: 40 }}>{neg(t) ? '-' : '+'}{money(t.amount)}</span><span className="muted">{t.label}</span></div>
-        <div><R k="Type" v={kind(t)} /><R k="Status" v="Completed (demo)" />{t.note && <R k="Note" v={t.note} />}<R k="Time" v={new Date(t.ts).toLocaleString()} /><R k="Receipt" v={t.id} mono /></div>
+        <div><R k="Type" v={kind(t)} /><R k="Status" v="Completed (demo)" />{t.note && <R k="Note" v={t.note} />}<R k="Time" v={fmt(t.ts)} /><R k="Receipt" v={t.id} mono /></div>
         <button className="btn sec" onClick={close}>Close</button>
       </div>
     </div>
@@ -619,7 +621,7 @@ function Done({ go, last, setAmt, setTo, setNote }) {
   return (<>
     <div className="center" style={{ marginTop: 40 }}><span className="okc pop"><I n="check" s={28} /></span><h1>Payment sent</h1>
       <p className="muted">{money(last.amount)} to @{last.to}</p></div>
-    <div><R k="Receipt" v={last.id} mono />{last.note && <R k="Note" v={last.note} />}<R k="Time" v={new Date(last.ts).toLocaleString()} /><R k="Mode" v="Demo, no blockchain" /></div>
+    <div><R k="Receipt" v={last.id} mono />{last.note && <R k="Note" v={last.note} />}<R k="Time" v={fmt(last.ts)} /><R k="Mode" v="Demo, no blockchain" /></div>
     <button className="btn" style={{ marginTop: 'auto' }} onClick={() => { setAmt(''); setTo(''); setNote(''); go('home') }}>Done</button>
   </>)
 }
