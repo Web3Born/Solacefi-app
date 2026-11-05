@@ -75,3 +75,10 @@ Smaller Add money button, and a searchable cash-out bank picker with 35 Nigerian
 Dollar / naira display (flip switch on the balance card and in Settings; amounts you type follow the chosen currency; demo rate).
 Hold-to-reveal balance (hide the balance, then press and hold it to peek). Animated private-send sequence
 (encrypt, prove, verify, settle) that explains what the live network will do. Glass and aurora look with a shield orb that turns gold when no PIN is set.
+
+## v0.11.0: real Aleo testnet wallet (first version)
+Settings > Aleo testnet wallet. Email login, embedded wallet, public and private balances, "Move to private", "Send privately" to an Aleo address
+or a Pay ID linked to a wallet, explorer link. Testnet only: sending is switched off if the wallet reports mainnet.
+Needs a Dynamic environment: see ALEO-WALLET-SETUP.md. Written from Dynamic's docs and tested here only against a stand-in; expect first-run fixes.
+The Dynamic packages are set to "latest" so their versions match: after the first successful build, pin the installed versions in package.json.
+The old .npmrc (legacy-peer-deps) was removed so npm installs the SDK's peer packages normally. If the install fails with ERESOLVE, tell me and I will adjust.

@@ -55,3 +55,8 @@ export const markClaimed = async id => {
   const { fs, db } = await init()
   await fs.updateDoc(fs.doc(db, 'transfers', id), { claimed: true })
 }
+export const linkAleo = async (id, aleoAddr) => {
+  if (O()) return O().linkAleo(id, aleoAddr)
+  const { fs, db } = await init()
+  await fs.updateDoc(fs.doc(db, 'payids', id), { aleoAddr })
+}

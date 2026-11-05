@@ -4,6 +4,7 @@ import * as chain from './chain.js'
 import { App as CapApp } from '@capacitor/app'
 import { BANKS, POPULAR } from './banks.js'
 import * as dir from './directory.js'
+import * as aleo from './aleo.js'
 import { isNative, bioAvailable, bioPrompt } from './biometric.js'
 import { loadLock, saveLock, makeLock, check, weak, failed, cleared, secure } from './lock.js'
 
@@ -12,7 +13,7 @@ const P = {
   home: 'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10', qr: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h3v3h-3zM20 14v6h-6',
   gear: 'M12 8a4 4 0 100 8 4 4 0 000-8zM4 12h2M18 12h2M12 4v2M12 18v2', check: 'M5 12l5 5L20 7',
   eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 100 6 3 3 0 000-6z',
-  lock: 'M5 11h14v10H5zM8 11V8a4 4 0 018 0v3', fp: 'M12 11v3c0 2.5-.6 4.5-1.6 6.5M8 8.5A5 5 0 0117 11v2.5c0 1.8-.3 3.5-.9 5M5.5 11a6.5 6.5 0 0112.2-3M5 14.5c0 1.5-.2 2.8-.6 4M15 20c.6-1.3 1-2.7 1.2-4.2', del: 'M21 5H9l-6 7 6 7h12zM15 9l-4 6M11 9l4 6', bell: 'M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0', help: 'M12 3a9 9 0 100 18 9 9 0 000-18zM9.5 9a2.5 2.5 0 115 0c0 1.5-2.5 2-2.5 3.5M12 17h.01', phone: 'M7 2h10v20H7zM11 18h2', vault: 'M4 5h16v14H4zM12 9a3 3 0 100 6 3 3 0 000-6zM4 9h2M4 15h2', shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4', more: 'M6 12h.01M12 12h.01M18 12h.01', bank: 'M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18', wifi: 'M2 9a15 15 0 0120 0M5 13a10 10 0 0114 0M9 17a4 4 0 016 0M12 20h.01', tv: 'M3 7h18v12H3zM8 3l4 4 4-4', card2: 'M3 6h18v12H3zM3 10h18', req: 'M3 6h18v12H3zM3 7l9 6 9-6', list: 'M4 6h16M4 12h16M4 18h10', alert: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v6M12 16.5h.01'
+  lock: 'M5 11h14v10H5zM8 11V8a4 4 0 018 0v3', wallet: 'M3 7a2 2 0 012-2h13v4M3 7v11a2 2 0 002 2h15V9H5a2 2 0 01-2-2M16 14.5h.01', fp: 'M12 11v3c0 2.5-.6 4.5-1.6 6.5M8 8.5A5 5 0 0117 11v2.5c0 1.8-.3 3.5-.9 5M5.5 11a6.5 6.5 0 0112.2-3M5 14.5c0 1.5-.2 2.8-.6 4M15 20c.6-1.3 1-2.7 1.2-4.2', del: 'M21 5H9l-6 7 6 7h12zM15 9l-4 6M11 9l4 6', bell: 'M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0', help: 'M12 3a9 9 0 100 18 9 9 0 000-18zM9.5 9a2.5 2.5 0 115 0c0 1.5-2.5 2-2.5 3.5M12 17h.01', phone: 'M7 2h10v20H7zM11 18h2', vault: 'M4 5h16v14H4zM12 9a3 3 0 100 6 3 3 0 000-6zM4 9h2M4 15h2', shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4', more: 'M6 12h.01M12 12h.01M18 12h.01', bank: 'M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18', wifi: 'M2 9a15 15 0 0120 0M5 13a10 10 0 0114 0M9 17a4 4 0 016 0M12 20h.01', tv: 'M3 7h18v12H3zM8 3l4 4 4-4', card2: 'M3 6h18v12H3zM3 10h18', req: 'M3 6h18v12H3zM3 7l9 6 9-6', list: 'M4 6h16M4 12h16M4 18h10', alert: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v6M12 16.5h.01'
 }
 const I = ({ n, s = 22 }) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={P[n]} /></svg>
 let CUR = 'USD'
@@ -26,7 +27,7 @@ const short = a => a.slice(0, 8) + '…' + a.slice(-4)
 const when = t => { const d = Math.floor((Date.now() - t) / 864e5); return d < 1 ? 'Today' : d < 2 ? 'Yesterday' : new Date(t).toLocaleDateString() }
 const nm = c => c.includes('@') ? c.split('@')[0].replace(/^./, x => x.toUpperCase()) : 'Friend'
 const clean = v => v.toLowerCase().replace(/^@/, '').trim()
-const VERSION = '0.10.0'
+const VERSION = '0.11.0'
 const press = (a, k) => k === '←' ? a.slice(0, -1) : k === '.' ? (a.includes('.') ? a : (a || '0') + '.') : /\.\d{2}$/.test(a) ? a : a === '0' ? k : a + k
 const Keys = ({ on }) => <div className="keys">{['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '←'].map(k => <button key={k} aria-label={k === '←' ? 'Delete' : k} onClick={() => on(k)}>{k}</button>)}</div>
 const Logo = () => <span className="logo"><img src="/logo-mark.png" alt="" /><span>Solace<b>Fi</b></span></span>
@@ -169,7 +170,7 @@ export default function App() {
       .catch(() => { say('Your Pay ID is taken online. Please pick a new one.'); set(s => ({ ...s, user: { ...s.user, payId: null } })); setScr('payid') })
   }, [st.user?.payId])
   const p = { st, set, go: setScr, to, setTo, amt, setAmt, last, setLast, say, note, setNote, lock, setLock, pinMode, setPinMode, reset, svc, setSvc, cv, setCv }
-  const S = { welcome: Welcome, payid: PayId, ready: Ready, home: Home, send: Send, review: Review, done: Done, receive: Receive, request: Request, pin: Pin, notifs: Notifs, topup: TopUp, convert: Convert, sending: Sending, vault: Vault, privacy: Privacy, activity: Activity, settings: Settings, blocked: Blocked }[scr]
+  const S = { welcome: Welcome, payid: PayId, ready: Ready, home: Home, send: Send, review: Review, done: Done, receive: Receive, request: Request, pin: Pin, notifs: Notifs, topup: TopUp, convert: Convert, wallet: Wallet, sending: Sending, vault: Vault, privacy: Privacy, activity: Activity, settings: Settings, blocked: Blocked }[scr]
   if (locked && lock) return <main className="app"><div className="scr"><LockScreen lock={lock} setLock={setLock} open={() => setLocked(false)} reset={reset} user={st.user} /></div></main>
   return <main className="app"><div className="scr" key={scr}><S {...p} /></div><div className={'toast' + (toast ? ' show' : '')} role="status" aria-live="polite">{toast}</div></main>
 }
@@ -277,7 +278,7 @@ function Home({ st, set, go, setTo, say, lock, setPinMode, setSvc, setCv }) {
   const prompt = !lock ? ['Secure your app with a PIN', 'Takes about 20 seconds', 'Set up', () => { setPinMode('set'); go('pin') }]
     : st.txs.length === 0 ? ['Add money to try a payment', 'Naira to USDCx, demo only', 'Add', () => { setCv('add'); go('convert') }] : null
   const svcs = [['Airtime', 'phone', () => { setSvc('airtime'); go('topup') }], ['Data', 'wifi', () => { setSvc('data'); go('topup') }], ['Vault', 'vault', () => go('vault')], ['Privacy', 'shield', () => go('privacy')],
-    ['Request', 'req', () => go('request')], ['Receive', 'down', () => go('receive')], ['Cards', 'card2', () => say('Cards are coming soon')], ['More', 'more', () => say('More services are on the way')]]
+    ['Request', 'req', () => go('request')], ['Receive', 'down', () => go('receive')], ['Wallet', 'wallet', () => go('wallet')], ['More', 'more', () => say('More services are on the way')]]
   const goal = st.goals[0]
   return (<>
     <div className="between">
@@ -384,6 +385,62 @@ function Convert({ st, set, go, say, cv, setCv }) {
     {pick && <BankSheet bank={bank} choose={b => { setBank(b); setPick(false) }} close={() => setPick(false)} />}
     <button className="btn" disabled={!ok} style={{ marginTop: 'auto' }} onClick={() => add ? setPhase('pay') : (setStep(0), setPhase('run'))}>{add ? 'Continue' : 'Cash out'}</button>
     {add && <button className="link" onClick={() => { set(s => chain.fund(s, 100)); say(`Added ${money(100)} test funds`) }}>Just want quick demo money? Get {money(100)} test funds</button>}
+  </>)
+}
+
+function Wallet({ st, set, go, say }) {
+  const [phase, setPhase] = useState('loading'), [email, setEmail] = useState(st.user?.contact?.includes('@') ? st.user.contact : ''), [code, setCode] = useState('')
+  const [addr, setAddr] = useState(''), [bal, setBal] = useState(null), [net, setNet] = useState(''), [busy, setBusy] = useState(''), [err, setErr] = useState('')
+  const [to, setTo2] = useState(''), [amt, setAmt2] = useState(''), [res, setRes] = useState(null), [sh, setSh] = useState('')
+  const refresh = async () => { try { setBal(await aleo.balances()) } catch (e) { setErr(e.message || 'Could not read balances') } }
+  const enter = async s => { setAddr(s.address); setPhase('ready'); try { setNet(await aleo.network()) } catch {} refresh() }
+  useEffect(() => {
+    if (!aleo.configured()) return setPhase('off')
+    aleo.status().then(s => s.signedIn ? enter(s) : setPhase('login')).catch(e => { setErr(e.message || 'Could not start the wallet'); setPhase('login') })
+  }, [])
+  const run = async (name, fn) => { setBusy(name); setErr(''); try { await fn() } catch (e) { setErr(e.message || 'Something went wrong') } setBusy('') }
+  const link = () => run('link', async () => { set(s => ({ ...s, user: { ...s.user, aleoAddr: addr } })); if (dir.live() && st.user.payId) await dir.linkAleo(st.user.payId, addr); say('Pay ID linked to this wallet') })
+  const target = to.startsWith('@') ? (st.dir[to.slice(1).toLowerCase()]?.aleoAddr || '') : to.trim()
+  const copy = async () => { try { await navigator.clipboard.writeText(addr); say('Address copied') } catch { say('Copy is not available here') } }
+  const mainnet = net === 'mainnet'
+  if (phase === 'loading') return <><div className="top"><Back go={go} to="settings" /><h1>Aleo wallet</h1></div><p className="muted">Starting…</p></>
+  if (phase === 'off') return (<>
+    <div className="top"><Back go={go} to="settings" /><h1>Aleo wallet</h1></div>
+    <div className="notice">The real Aleo testnet wallet is not switched on in this build. Follow ALEO-WALLET-SETUP.md to add your Dynamic environment ID.</div>
+    <p className="muted small">Until then, SolaceFi runs in demo mode with fake balances.</p>
+  </>)
+  if (phase === 'login' || phase === 'code') return (<>
+    <div className="top"><Back go={go} to="settings" /><h1>Aleo wallet</h1></div>
+    <p className="muted">Log in with your email. A private wallet on Aleo testnet is created for you. Test credits only, no real money.</p>
+    {phase === 'login' ? <>
+      <div className="field"><label htmlFor="we" className="muted small">Email</label><input id="we" className="in" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" /></div>
+      <button className="btn" disabled={!/^\S+@\S+\.\S+$/.test(email) || !!busy} onClick={() => run('code', async () => { await aleo.sendCode(email.trim()); setPhase('code') })}>{busy ? 'Sending…' : 'Send me a code'}</button>
+    </> : <>
+      <div className="field"><label htmlFor="wc" className="muted small">6-digit code sent to {email}</label><input id="wc" className="in" inputMode="numeric" maxLength={6} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} placeholder="123456" autoComplete="one-time-code" /></div>
+      <button className="btn" disabled={code.length < 6 || !!busy} onClick={() => run('verify', async () => enter(await aleo.verifyCode(code)))}>{busy ? 'Checking…' : 'Log in'}</button>
+      <button className="link" onClick={() => setPhase('login')}>Use a different email</button></>}
+    {err && <p className="err" role="alert">{err}</p>}
+  </>)
+  const privAmt = parseFloat(amt) || 0
+  const sendOk = aleo.isAddress(target) && privAmt > 0 && !mainnet
+  return (<>
+    <div className="top"><Back go={go} to="settings" /><h1>Aleo wallet</h1></div>
+    <div className="between"><span className={'tag ' + (mainnet ? 'danger' : '')}>{mainnet ? 'MAINNET: sending is off' : net ? 'Aleo testnet' : 'Connecting…'}</span><button className="link" onClick={() => run('out', async () => { await aleo.signOut(); setPhase('login'); setBal(null) })}>Log out</button></div>
+    <div className="card"><p className="muted small">Your wallet address</p><p className="mono" style={{ wordBreak: 'break-all', margin: '4px 0 12px' }}>{addr}</p>
+      <div className="two"><button className="btn sec" onClick={copy}>Copy address</button><button className="btn sec" onClick={link} disabled={st.user?.aleoAddr === addr}>{st.user?.aleoAddr === addr ? 'Pay ID linked' : 'Link to my Pay ID'}</button></div></div>
+    <section className="wid"><div className="between"><h2>Balances</h2><button className="link" onClick={() => run('refresh', refresh)}>{busy === 'refresh' ? '…' : 'Refresh'}</button></div>
+      <R k="Public" v={bal ? bal.pub + ' ALEO' : '…'} /><R k="Private" v={bal ? bal.priv + ' ALEO' : '…'} /><R k="Largest private record" v={bal ? bal.largest + ' ALEO' : '…'} />
+      <p className="muted small">Test credits come from the Aleo faucet (see ALEO-WALLET-SETUP.md). A payment can be at most the size of your largest private record.</p></section>
+    <section className="wid"><h2 style={{ marginBottom: 10 }}>Move to private</h2>
+      <div className="field"><label htmlFor="sh" className="muted small">Amount (ALEO)</label><input id="sh" className="in" inputMode="decimal" value={sh} onChange={e => setSh(e.target.value.replace(/[^\d.]/g, ''))} placeholder="1" /></div>
+      <button className="btn" style={{ marginTop: 12 }} disabled={!(parseFloat(sh) > 0) || mainnet || !!busy} onClick={() => run('shield', async () => { const r = await aleo.shield(sh); setRes(r); setSh(''); say('Submitted. Refresh in a minute.') })}>{busy === 'shield' ? 'Proving…' : 'Move to private'}</button></section>
+    <section className="wid"><h2 style={{ marginBottom: 10 }}>Send privately</h2>
+      <div className="field"><label htmlFor="wt" className="muted small">To an Aleo address, or a linked @PayID</label><input id="wt" className="in" value={to} onChange={e => setTo2(e.target.value)} placeholder="aleo1… or @adeola" autoCapitalize="none" spellCheck="false" /></div>
+      {to.startsWith('@') && !target && <p className="muted small">That Pay ID has no linked Aleo wallet yet.</p>}
+      <div className="field" style={{ marginTop: 10 }}><label htmlFor="wa" className="muted small">Amount (ALEO)</label><input id="wa" className="in" inputMode="decimal" value={amt} onChange={e => setAmt2(e.target.value.replace(/[^\d.]/g, ''))} placeholder="0.5" /></div>
+      <button className="btn" style={{ marginTop: 12 }} disabled={!sendOk || !!busy} onClick={() => run('send', async () => { const r = await aleo.sendPrivate(target, amt); setRes(r); setAmt2(''); setTo2(''); say('Private transfer submitted') })}>{busy === 'send' ? 'Generating proof…' : 'Send privately'}</button></section>
+    {res && <div className="notice">Submitted. <a className="link" href={res.url} target="_blank" rel="noopener noreferrer">View on the explorer</a> (it can take a minute to appear).</div>}
+    {err && <p className="err" role="alert">{err}</p>}
   </>)
 }
 
@@ -681,7 +738,7 @@ function Settings({ st, set, go, say, lock, setLock, setPinMode, reset: doReset 
       {lock && <div className="rowbtn" style={{ display: 'grid', gap: 8 }}><span>Lock after leaving the app</span><div className="seg small-seg">{[[0, 'Right away'], [60, '1 min'], [300, '5 min']].map(([v, l]) => <button key={v} className={lock.after === v ? 'on' : ''} onClick={() => after(v)}>{l}</button>)}</div></div>}
       <div className="off"><R k="Passkey" v="Coming soon" /><R k="Recovery method" v="Coming soon" /></div></section>
     <section className="grp"><h2>Demo tools</h2>{tog('frozen', 'Simulate a paused account')}</section>
-    <section className="grp"><h2>About</h2><R k="Version" v={VERSION + ' (demo)'} /><R k="Network" v="None. Demo mode." /><R k="Pay ID directory" v={dir.live() ? 'Shared online' : 'This phone only'} /><R k="Secure storage" v={secure() ? 'Yes' : 'Basic mode'} />
+    <section className="grp"><h2>About</h2><R k="Version" v={VERSION + ' (demo)'} /><R k="Network" v="None. Demo mode." /><button className="rowbtn" onClick={() => go('wallet')}><span>Aleo testnet wallet</span><span className="muted">{aleo.configured() ? 'Open ›' : 'Not set up'}</span></button><R k="Pay ID directory" v={dir.live() ? 'Shared online' : 'This phone only'} /><R k="Secure storage" v={secure() ? 'Yes' : 'Basic mode'} />
       <R k="Support" v={<a href="mailto:Solacefipay@gmail.com" style={{ color: 'var(--g)' }}>Email us</a>} /></section>
     <button className="btn sec" onClick={() => reset('Log out? In demo mode this clears the demo data on this device.')}>Log out</button>
     <button className="btn sec danger" onClick={() => reset('Delete your demo account and all demo data on this device?')}>Delete account</button>

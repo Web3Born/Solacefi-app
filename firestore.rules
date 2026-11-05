@@ -8,10 +8,14 @@ service cloud.firestore {
       allow create: if request.auth != null
         && id.matches('^[a-z0-9_.]{3,20}$')
         && request.resource.data.uid == request.auth.uid
-        && request.resource.data.keys().hasOnly(['uid', 'name', 'addr', 'created'])
+        && request.resource.data.keys().hasOnly(['uid', 'name', 'addr', 'created', 'aleoAddr'])
         && request.resource.data.name is string && request.resource.data.name.size() <= 40
         && request.resource.data.addr is string && request.resource.data.addr.size() <= 80;
-      allow update, delete: if false;
+      allow update: if request.auth != null
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['aleoAddr'])
+        && request.resource.data.aleoAddr is string && request.resource.data.aleoAddr.size() <= 80;
+      allow delete: if false;
     }
     // Demo transfers (test money only). Only sender and recipient can read; recipient can mark as claimed.
     match /transfers/{tid} {
