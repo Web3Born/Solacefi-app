@@ -1,4 +1,27 @@
-# SolaceFi app (demo v0.5)
+# SolaceFi
+
+**Money Moves. Privacy Stays.** A privacy-first payments app prototype for Africa, built around Aleo.
+
+> **Status: early-stage prototype.** It runs on demo data. Real connections to Aleo testnet and a shared Pay ID directory are built but must be switched on with your own setup. **Do not use real money.** Not affiliated with or endorsed by Aleo.
+
+## What it does
+Pay IDs instead of long addresses, send and request, a private-send flow, naira and USDCx bridge simulation, savings goals, PIN and fingerprint lock, an Aleo testnet wallet screen. See `docs/ARCHITECTURE.md` and the project guide.
+
+## Run it
+```
+npm install
+npm run dev
+```
+
+## Switch on the real parts (optional)
+- Shared Pay IDs: `FIREBASE-SETUP.md`
+- Aleo testnet wallet: `ALEO-WALLET-SETUP.md`
+
+## Open source
+Licensed under Apache-2.0 (`LICENSE`, `NOTICE`). The SolaceFi name and logo are not licensed (`TRADEMARKS.md`).
+Contributing: `CONTRIBUTING.md`. Security reports: `SECURITY.md`. Threat model: `docs/THREAT-MODEL.md`.
+
+---
 
 A working React app (Vite) with every prototype screen: sign-up, Pay ID, receive with QR code,
 send with review, activity, settings, and the paused-account state.
