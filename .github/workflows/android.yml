@@ -16,7 +16,7 @@ jobs:
       VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
       VITE_DYNAMIC_ENV_ID: ${{ vars.VITE_DYNAMIC_ENV_ID }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 20
